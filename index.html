@@ -26,7 +26,7 @@
     --ink-soft: #38382f;
     --muted: #6a6a61;
     /* left offset that clears the robot image (22vw + gap) */
-    --content-offset: calc(22vw + 56px);
+    --content-offset: calc(27vw + 44px);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,18 +45,19 @@
 
   .robot {
     position: absolute;
-    left: 0;
+    left: -15vw;
     bottom: 0;
     height: 100vh;
-    width: 22vw;
-    min-width: 250px;
+    width: 34vw;
+    min-width: 300px;
     object-fit: cover;
     object-position: left bottom;
     pointer-events: none;
     user-select: none;
     z-index: 1;
-    -webkit-mask-image: linear-gradient(to right, #000 10%, transparent 78%);
-    mask-image: linear-gradient(to right, #000 10%, transparent 78%);
+    /* single radial fade, sized to the box so it reaches 0 before every edge */
+    -webkit-mask-image: radial-gradient(ellipse 62% 62% at 30% 64%, #000 78%, transparent 100%);
+    mask-image: radial-gradient(ellipse 62% 62% at 30% 64%, #000 78%, transparent 100%);
   }
 
   /* ---- header ---- */
@@ -97,7 +98,7 @@
   }
 
   .spec {
-    margin-top: 28px;
+    margin-top: 20px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
     font-weight: 500;
@@ -109,7 +110,7 @@
   }
 
   .lede {
-    margin-top: 14px;
+    margin-top: 28px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -229,22 +230,22 @@
 <body>
   <div class="stage">
 
-    <img class="robot" src="images/robot.jpeg" alt="Telekinetic robotic arm" />
+    <img class="robot" src="images/robot.png" alt="Telekinetic robot" />
 
     <header class="site-header">
       <span class="brand-name">TELEKINETIC</span>
     </header>
 
     <main class="hero">
-      <h1>Bored of short, weak arms that don&rsquo;t do anything?</h1>
-
-      <p class="spec">Two arms &middot; mobile base &middot; 1&nbsp;kg payload &middot; 650&nbsp;mm reach</p>
+      <h1>Bored of short, weak robot arms that don&rsquo;t do anything?</h1>
 
       <div class="lede">
         <p>Train robot to fold your laundry, clean your kitchen, and more</p>
         <p>Most tasks take just 30 min of training</p>
         <p>Zero setup required, comes with easy to use controllers</p>
       </div>
+
+      <p class="spec">Two arms &middot; mobile base &middot; 1&nbsp;kg payload &middot; 650&nbsp;mm reach</p>
 
       <div class="cta">
         <!-- Custom signup wired to Loops (matches the Framer code component) -->
