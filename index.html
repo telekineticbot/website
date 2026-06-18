@@ -25,8 +25,8 @@
     --ink: #14140f;
     --ink-soft: #38382f;
     --muted: #6a6a61;
-    /* left offset that clears the robot image (22vw + gap) */
-    --content-offset: calc(27vw + 44px);
+    /* fixed left offset that clears the robot image (stays put on resize) */
+    --content-offset: 380px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,11 +45,10 @@
 
   .robot {
     position: absolute;
-    left: -15vw;
+    left: max(-180px, -16.5vh);
     bottom: 0;
     height: 100vh;
-    width: 34vw;
-    min-width: 300px;
+    width: 460px;
     object-fit: cover;
     object-position: left bottom;
     pointer-events: none;
@@ -67,8 +66,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* align the wordmark with the hero content so it clears the robot */
-    padding: 32px 52px 32px var(--content-offset);
+    /* wordmark left-aligned to the page edge */
+    padding: 32px 52px;
   }
   .brand-name {
     font-weight: 800;
@@ -90,7 +89,7 @@
 
   .hero h1 {
     font-weight: 800;
-    font-size: clamp(22px, 2.6vw, 38px);
+    font-size: 38px;
     line-height: 1.0;
     letter-spacing: -0.03em;
     color: var(--ink);
@@ -203,27 +202,31 @@
 
   /* ---- responsive ---- */
   @media (max-width: 1439px) {
-    :root { --content-offset: 300px; }
-    .hero h1 { font-size: 30px; }
+    .hero h1 { white-space: normal; max-width: 620px; }
   }
 
   @media (max-width: 1199px) {
-    :root { --content-offset: 312px; }
+    :root { --content-offset: 300px; }
     .hero { padding-right: 40px; }
-    .hero h1 { white-space: normal; font-size: 32px; max-width: 420px; }
+    .hero h1 { white-space: normal; max-width: 560px; }
     .spec, .lede p { white-space: normal; }
-    .lede p, .spec { max-width: 400px; }
+    .lede p { max-width: 400px; }
     .signup { max-width: 400px; }
   }
 
   @media (max-width: 809px) {
-    :root { --content-offset: 28px; }
-    .site-header { padding: 24px 28px; }
-    .hero { padding: 40px 28px 64px; min-height: calc(100vh - 80px); }
-    .hero h1 { font-size: 30px; max-width: none; }
-    .spec, .lede p { white-space: normal; max-width: none; }
+    .site-header { padding: 24px; }
+    .hero {
+      padding: 24px;
+      min-height: calc(100vh - 72px);
+    }
+    /* text overlays the robot, full width */
+    .hero h1 { font-size: 32px; max-width: none; }
+    .lede p { font-size: 16px; white-space: normal; max-width: none; }
+    .spec { font-size: 13px; white-space: normal; max-width: none; }
     .signup { max-width: none; flex-wrap: wrap; }
-    .robot { width: 60vw; min-width: 0; opacity: 0.3; }
+    /* robot keeps the exact desktop pinning + vertical-scaling behavior (inherits base) */
+    .robot { opacity: 0.35; }
   }
 </style>
 </head>
@@ -245,7 +248,7 @@
         <p>Zero setup required, comes with easy to use controllers</p>
       </div>
 
-      <p class="spec">Two arms &middot; mobile base &middot; 1&nbsp;kg payload &middot; 650&nbsp;mm reach</p>
+      <p class="spec">Two&nbsp;arms &middot; mobile&nbsp;base &middot; 1&nbsp;kg&nbsp;payload &middot; 650&nbsp;mm&nbsp;reach</p>
 
       <div class="cta">
         <!-- Custom signup wired to Loops (matches the Framer code component) -->
