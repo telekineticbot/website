@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Telekinetic</title>
+<meta name="description" content="Train a robot to fold laundry, clean your kitchen, and more — most tasks in about 30 minutes of training. Zero setup, easy-to-use controllers.">
+
+<!-- Open Graph / iMessage / social share preview -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Telekinetic">
+<meta property="og:description" content="Train a robot to fold laundry, clean your kitchen, and more — most tasks in about 30 minutes of training. Zero setup, easy-to-use controllers.">
+<meta property="og:image" content="https://framerusercontent.com/images/ysrdTfBZRmRlYX41OuiXjvjkpw.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Telekinetic">
+<meta name="twitter:description" content="Train a robot to fold laundry, clean your kitchen, and more — most tasks in about 30 minutes of training. Zero setup, easy-to-use controllers.">
+<meta name="twitter:image" content="https://framerusercontent.com/images/ysrdTfBZRmRlYX41OuiXjvjkpw.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #ff7122;
+    --ink: #14140f;
+    --ink-soft: #38382f;
+    --muted: #6a6a61;
+    /* left offset that clears the robot image (22vw + gap) */
+    --content-offset: calc(22vw + 56px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #d9dad6; }
+  ::selection { background: var(--accent); color: #fff; }
+
+  .stage {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(180deg, #dcdcd9 0%, #d6d7d3 100%);
+    font-family: 'Manrope', sans-serif;
+    color: #1a1a17;
+    overflow: hidden;
+  }
+
+  .robot {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    width: 22vw;
+    min-width: 250px;
+    object-fit: cover;
+    object-position: left bottom;
+    pointer-events: none;
+    user-select: none;
+    z-index: 1;
+    -webkit-mask-image: linear-gradient(to right, #000 10%, transparent 78%);
+    mask-image: linear-gradient(to right, #000 10%, transparent 78%);
+  }
+
+  /* ---- header ---- */
+  .site-header {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* align the wordmark with the hero content so it clears the robot */
+    padding: 32px 52px 32px var(--content-offset);
+  }
+  .brand-name {
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+
+  /* ---- hero ---- */
+  .hero {
+    position: relative;
+    z-index: 3;
+    min-height: calc(100vh - 96px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 52px 0 var(--content-offset);
+  }
+
+  .hero h1 {
+    font-weight: 800;
+    font-size: clamp(22px, 2.6vw, 38px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .spec {
+    margin-top: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+    font-feature-settings: "tnum" on;
+    white-space: nowrap;
+  }
+
+  .lede {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .lede p {
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  /* ---- signup (Loops) ---- */
+  .cta {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .signup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 520px;
+  }
+  .signup__email {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    padding: 0 22px;
+    border-radius: 100px;
+    border: 1.5px solid var(--ink);
+    background: #fff;
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    outline: none;
+  }
+  .signup__email::placeholder { color: var(--muted); }
+  .signup__submit {
+    height: 54px;
+    padding: 0 28px;
+    border-radius: 100px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+  }
+  .signup__submit:hover { background: var(--ink); }
+  .signup__submit:disabled { opacity: 0.7; cursor: default; }
+  .signup__success {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .signup__error {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #b3402a;
+    min-height: 0;
+  }
+
+  .price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.3;
+    font-feature-settings: "tnum" on;
+  }
+  .note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* ---- responsive ---- */
+  @media (max-width: 1439px) {
+    :root { --content-offset: 300px; }
+    .hero h1 { font-size: 30px; }
+  }
+
+  @media (max-width: 1199px) {
+    :root { --content-offset: 312px; }
+    .hero { padding-right: 40px; }
+    .hero h1 { white-space: normal; font-size: 32px; max-width: 420px; }
+    .spec, .lede p { white-space: normal; }
+    .lede p, .spec { max-width: 400px; }
+    .signup { max-width: 400px; }
+  }
+
+  @media (max-width: 809px) {
+    :root { --content-offset: 28px; }
+    .site-header { padding: 24px 28px; }
+    .hero { padding: 40px 28px 64px; min-height: calc(100vh - 80px); }
+    .hero h1 { font-size: 30px; max-width: none; }
+    .spec, .lede p { white-space: normal; max-width: none; }
+    .signup { max-width: none; flex-wrap: wrap; }
+    .robot { width: 60vw; min-width: 0; opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+
+    <img class="robot" src="images/robot.jpeg" alt="Telekinetic robotic arm" />
+
+    <header class="site-header">
+      <span class="brand-name">TELEKINETIC</span>
+    </header>
+
+    <main class="hero">
+      <h1>Bored of short, weak arms that don&rsquo;t do anything?</h1>
+
+      <p class="spec">Two arms &middot; mobile base &middot; 1&nbsp;kg payload &middot; 650&nbsp;mm reach</p>
+
+      <div class="lede">
+        <p>Train robot to fold your laundry, clean your kitchen, and more</p>
+        <p>Most tasks take just 30 min of training</p>
+        <p>Zero setup required, comes with easy to use controllers</p>
+      </div>
+
+      <div class="cta">
+        <!-- Custom signup wired to Loops (matches the Framer code component) -->
+        <form class="signup" id="signup" novalidate>
+          <input class="signup__email" id="email" type="email" required placeholder="Enter your email" aria-label="Email address" />
+          <button class="signup__submit" id="submit" type="submit">Notify me</button>
+        </form>
+        <p class="signup__error" id="error" role="alert"></p>
+
+        <div class="price">$1,500 + $250/mo</div>
+        <div class="note">Preorders open September. Robots shipping in October.</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Loops newsletter form integration (same form ID as the Framer build)
+    const LOOPS_FORM_ID = "cmqjtqvul09p20j1ea906orra";
+
+    const form = document.getElementById("signup");
+    const emailInput = document.getElementById("email");
+    const submitBtn = document.getElementById("submit");
+    const errorEl = document.getElementById("error");
+    const cta = form.parentElement;
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorEl.textContent = "";
+
+      const email = emailInput.value.trim();
+      if (!email || !emailInput.checkValidity()) {
+        errorEl.textContent = "Please enter a valid email.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "…";
+
+      try {
+        const res = await fetch(
+          "https://app.loops.so/api/newsletter-form/" + LOOPS_FORM_ID,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ email }).toString(),
+          }
+        );
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data && data.success !== false) {
+          const success = document.createElement("div");
+          success.className = "signup__success";
+          success.textContent = "You’re on the list — watch your inbox.";
+          form.replaceWith(success);
+        } else {
+          throw new Error((data && data.message) || "Something went wrong.");
+        }
+      } catch (err) {
+        errorEl.textContent = "Couldn’t sign you up. Please try again.";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Notify me";
+      }
+    });
+  </script>
+</body>
+</html>
