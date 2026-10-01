@@ -234,132 +234,163 @@
 }
 </style>
 <style>
-  html, body { margin: 0; padding: 0; background: #d9dad6; overflow-x: clip; }
-  a { color: #14140f; }
-  a:hover { color: #ff7122; }
-
-  @keyframes tk-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  :root {
+    --ink: #000;
+    --paper: #f3f1ec;
+    --muted: #8d8c88;
+    --rule: rgba(243, 241, 236, 0.14);
+    --img-ratio: 1216 / 832;
+  }
+  html, body { margin: 0; padding: 0; background: var(--ink); color: var(--paper); overflow-x: clip; }
+  body { font-family: 'Manrope', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--paper); }
+  .mono { font-family: 'JetBrains Mono', monospace; }
 
   .tk-grain {
-    position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0.05;
+    position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0.06;
     background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22160%22 height=%22160%22 filter=%22%75rl(%23n)%22/%3E%3C/svg%3E');
     background-size: 160px 160px;
   }
 
-  @keyframes tk-drift { from { transform: scale(1.02) translateX(0); } to { transform: scale(1.07) translateX(-1.2%); } }
-  .tk-drift { animation: tk-drift 28s ease-in-out infinite alternate; will-change: transform; }
-  @media (prefers-reduced-motion: reduce) { .tk-drift { animation: none; } }
-
-  .tk-fade { animation: tk-rise 400ms ease both; }
+  @keyframes tk-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes tk-in { from { opacity: 0; } to { opacity: 1; } }
+  .tk-fade { animation: tk-rise 500ms ease both; }
   @supports (animation-timeline: view()) {
     .tk-fade { animation-timeline: view(); animation-range: entry 0% entry 35%; animation-duration: auto; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .tk-fade { animation: none; opacity: 1; transform: none; }
-  }
 
-  .tk-plate {
-    display: block; width: 100%; height: auto;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+  /* Hero: the image is the page. Box keeps the image's aspect ratio so the
+     overlay copy stays locked under the baked-in wordmark at any width. */
+  .tk-hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .tk-hero-box { position: relative; width: min(100%, calc(100vh * var(--img-ratio))); aspect-ratio: var(--img-ratio); }
+  .tk-hero-img {
+    display: block; width: 100%; height: 100%; object-fit: cover;
+    animation: tk-in 1200ms ease both;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 5%, #000 98.5%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 5%, #000 88%, transparent 100%);
     -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 5%, #000 98.5%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 5%, #000 88%, transparent 100%);
     mask-composite: intersect;
   }
-
-  .tk-email:focus {
-    outline: 2px solid #ff7122;
-    outline-offset: -1px;
+  .tk-hero-copy {
+    position: absolute; left: 65%; top: 57%; width: 32%;
+    animation: tk-rise 700ms 500ms ease both;
   }
+  .tk-h1 { font-weight: 600; font-size: clamp(18px, 1.9vw, 30px); line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 clamp(16px, 2vw, 28px); color: var(--paper); }
 
-  @media (max-width: 820px) {
-    .tk-hero { flex-direction: column !important; align-items: stretch !important; min-height: 0 !important; }
-    .tk-hero-plate { position: relative !important; inset: auto !important; width: 100% !important; height: 52vh !important; }
-    .tk-hero-maskwrap { -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%) !important; mask-image: linear-gradient(to bottom, #000 70%, transparent 100%) !important; }
-    .tk-hero-text { margin-left: 0 !important; max-width: none !important; padding: 8px 24px 48px !important; }
-    .tk-h1 { font-size: 40px !important; margin-bottom: 28px !important; }
-    .tk-story-plate { width: 100% !important; bottom: auto !important; height: 52vh !important; }
-    .tk-story-text { left: 0 !important; top: 52vh !important; align-items: flex-start !important; }
-    .tk-story-box { height: calc(48vh - 40px) !important; margin-top: 20px !important; }
-    .tk-story-head { top: 0 !important; }
-    .tk-story-ticks { top: 38px !important; }
-    .tk-story-word { top: auto !important; bottom: 24px !important; transform: none !important; }
-    .tk-word { font-size: 32px !important; }
+  .tk-form { display: flex; width: 100%; max-width: 380px; }
+  .tk-email {
+    flex: 1; min-width: 0; border: 1px solid var(--rule); border-right: none; background: rgba(255,255,255,0.03);
+    color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 12px 14px; border-radius: 0; outline: none;
+  }
+  .tk-email::placeholder { color: var(--muted); }
+  .tk-email:focus { border-color: var(--paper); }
+  .tk-btn {
+    border: 1px solid var(--paper); background: var(--paper); color: var(--ink); font-family: 'Manrope', sans-serif; font-weight: 700;
+    font-size: 14px; padding: 12px 20px; border-radius: 0; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 0 24px rgba(255, 250, 235, 0.18); transition: box-shadow 200ms ease;
+  }
+  .tk-btn:hover { box-shadow: 0 0 36px rgba(255, 250, 235, 0.38); }
+  .tk-btn:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+  .tk-error { font-size: 13px; margin: 10px 0 0; min-height: 1em; color: var(--muted); }
+  .tk-price { font-size: 15px; margin-top: 10px; color: var(--paper); }
+
+  /* Sections */
+  .tk-section { max-width: 1120px; margin: 0 auto; padding: 120px 24px; }
+  .tk-label { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 40px; }
+  .tk-steps { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); }
+  .tk-step { padding: 32px 32px 0 0; }
+  .tk-step + .tk-step { padding-left: 32px; border-left: 1px solid var(--rule); }
+  .tk-step-n { font-size: 12px; color: var(--muted); }
+  .tk-step-word { font-weight: 700; font-size: clamp(36px, 4vw, 56px); letter-spacing: -0.02em; margin: 16px 0 12px; }
+  .tk-step p { font-size: 14px; line-height: 1.6; margin: 0; color: var(--muted); }
+
+  .tk-specs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .tk-spec { background: var(--ink); padding: 28px 24px; }
+  .tk-spec-v { font-weight: 700; font-size: clamp(24px, 2.6vw, 34px); letter-spacing: -0.02em; }
+  .tk-spec-k { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  .tk-close { text-align: center; padding: 120px 24px 80px; }
+  .tk-close-line { font-size: 14px; color: var(--muted); margin: 0; }
+  .tk-close a { display: inline-block; margin-top: 28px; font-size: 14px; text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 2px; }
+  .tk-close a:hover { border-color: var(--paper); }
+
+  @media (max-width: 1024px) {
+    .tk-hero { min-height: 0; flex-direction: column; align-items: stretch; padding-bottom: 24px; overflow: visible; }
+    .tk-hero-box { width: 100%; aspect-ratio: auto; }
+    .tk-hero-img { height: auto; }
+    .tk-hero-copy { position: static; width: auto; padding: 8px 16px 0; }
+    .tk-h1 { font-size: 28px; }
+    .tk-form { max-width: 480px; }
+    .tk-section { padding: 80px 16px; }
+    .tk-steps { grid-template-columns: 1fr; border-top: none; }
+    .tk-step, .tk-step + .tk-step { padding: 24px 0; border-left: none; border-top: 1px solid var(--rule); }
+    .tk-specs { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tk-fade, .tk-hero-img, .tk-hero-copy { animation: none; opacity: 1; transform: none; }
   }
 </style>
 </head>
 <body>
 
-<div style="background:#d9dad6; color:#14140f; font-family:'Manrope',sans-serif; -webkit-font-smoothing:antialiased;">
+<div class="tk-grain" aria-hidden="true"></div>
 
-  <div class="tk-grain" aria-hidden="true"></div>
-
-  <!-- 1. Hero -->
-  <section class="tk-hero" style="position:relative; min-height:100vh; display:flex; align-items:center;">
-    <div class="tk-hero-plate" style="position:absolute; inset:0; overflow:hidden;">
-      <div class="tk-hero-maskwrap" style="position:absolute; inset:0; overflow:hidden; -webkit-mask-image:linear-gradient(to right, #000 42%, rgba(0,0,0,0.38) 62%, rgba(0,0,0,0.12) 78%, transparent 94%); mask-image:linear-gradient(to right, #000 42%, rgba(0,0,0,0.38) 62%, rgba(0,0,0,0.12) 78%, transparent 94%);">
-        <img class="tk-hero-img tk-drift" src="assets/hero.png" alt="Painted illustration of a robot on a San Francisco terrace" style="display:block; width:100%; height:100%; object-fit:cover; object-position:center;">
-      </div>
-    </div>
-
-    <div class="tk-hero-text" style="position:relative; z-index:1; margin-left:60vw; flex:1; max-width:440px; padding:48px 24px; display:flex; flex-direction:column; align-items:flex-start;">
-      <div style="font-weight:600; font-size:20px; letter-spacing:0.02em; margin-bottom:28px;">Telekinetic</div>
-      <h1 class="tk-h1" style="font-weight:700; font-size:clamp(48px,6vw,84px); line-height:1.0; letter-spacing:-0.025em; margin:0 0 36px;">Teach your own robot.</h1>
-
-      <div id="tk-signup" style="width:100%; max-width:380px;">
-        <form id="tk-form" style="display:flex; width:100%;" novalidate>
-          <input id="tk-email" class="tk-email" type="email" placeholder="Enter your email" aria-label="Email address" style="flex:1; min-width:0; border:1px solid #14140f; border-right:none; background:transparent; color:#14140f; font-family:'JetBrains Mono',monospace; font-size:14px; padding:12px 14px; border-radius:0; outline:none;">
-          <button id="tk-submit" type="submit" style="border:1px solid #14140f; background:#ff7122; color:#14140f; font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; padding:12px 20px; border-radius:0; cursor:pointer; white-space:nowrap;">Notify me</button>
+<!-- 1. Hero -->
+<section class="tk-hero">
+  <div class="tk-hero-box">
+    <img class="tk-hero-img" src="assets/robots.webp" width="1216" height="832" alt="Telekinetic: two white robots with glowing eyes, chrome joints and gripper hands against a black background">
+    <div class="tk-hero-copy">
+      <h1 class="tk-h1">Teach your own robot.</h1>
+      <div id="tk-signup">
+        <form id="tk-form" class="tk-form" novalidate>
+          <input id="tk-email" class="tk-email" type="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email">
+          <button id="tk-submit" class="tk-btn" type="submit">Notify me</button>
         </form>
-        <p id="tk-error" role="alert" style="font-family:'JetBrains Mono',monospace; font-size:13px; margin:10px 0 0; min-height:1em;"></p>
+        <p id="tk-error" class="tk-error mono" role="alert"></p>
       </div>
-
-      <div style="font-family:'JetBrains Mono',monospace; font-size:17px; margin-top:20px;">$2,500 · ships October</div>
-      <div style="font-family:'JetBrains Mono',monospace; font-size:13px; margin-top:10px;">Two arms · mobile base · 5 kg payload at 50% extension · 650 mm reach</div>
+      <div class="tk-price mono">$2,500 · ships October</div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 2. How it works: pinned stage, images crossfade on scroll -->
-  <section id="tk-story" style="position:relative; height:320vh;">
-    <div id="tk-stage" style="position:absolute; top:0; left:0; right:0; height:100vh; overflow:hidden;">
-
-      <div class="tk-story-plate" style="position:absolute; top:0; left:0; bottom:0; width:62vw; overflow:hidden;">
-        <img class="tk-story-img tk-drift" data-step="0" src="assets/show.png" alt="Painted illustration of a person demonstrating a task with handheld controllers" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:1; transition:opacity 480ms ease;">
-        <img class="tk-story-img tk-drift" data-step="1" src="assets/guide.png" alt="Painted illustration of a person correcting the robot as it attempts a task" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:0; transition:opacity 480ms ease;">
-        <img class="tk-story-img tk-drift" data-step="2" src="assets/done.png" alt="Painted illustration of the robot folding laundry alone at the table" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:0; transition:opacity 480ms ease;">
-      </div>
-
-      <div class="tk-story-text" style="position:absolute; top:0; bottom:0; left:62vw; right:0; display:flex; align-items:center;">
-        <div class="tk-story-box" style="position:relative; width:100%; max-width:440px; height:160px; padding:0 24px;">
-          <div class="tk-story-head" style="position:absolute; top:-100px; left:24px; font-weight:600; font-size:20px; letter-spacing:0.02em;">How it works</div>
-          <div class="tk-story-ticks" style="position:absolute; top:-56px; left:24px; display:flex; gap:8px;">
-            <span class="tk-tick" data-step="0" style="width:22px; height:2px; background:#14140f; opacity:1; transition:opacity 480ms ease;"></span>
-            <span class="tk-tick" data-step="1" style="width:22px; height:2px; background:#14140f; opacity:0.3; transition:opacity 480ms ease;"></span>
-            <span class="tk-tick" data-step="2" style="width:22px; height:2px; background:#14140f; opacity:0.3; transition:opacity 480ms ease;"></span>
-          </div>
-          <div class="tk-story-word" data-step="0" style="position:absolute; top:50%; transform:translateY(-50%); opacity:1;">
-            <div class="tk-word" style="font-weight:700; font-size:40px; letter-spacing:-0.01em;">Show</div>
-            <p style="font-family:'JetBrains Mono',monospace; font-size:14px; line-height:1.5; margin:12px 0 0;">Do the task yourself with the controllers.</p>
-          </div>
-          <div class="tk-story-word" data-step="1" style="position:absolute; top:50%; transform:translateY(-50%); opacity:0;">
-            <div class="tk-word" style="font-weight:700; font-size:40px; letter-spacing:-0.01em;">Guide</div>
-            <p style="font-family:'JetBrains Mono',monospace; font-size:14px; line-height:1.5; margin:12px 0 0;">Correct the robot as it tries.</p>
-          </div>
-          <div class="tk-story-word" data-step="2" style="position:absolute; top:50%; transform:translateY(-50%); opacity:0;">
-            <div class="tk-word" style="font-weight:700; font-size:40px; letter-spacing:-0.01em;">Done</div>
-            <p style="font-family:'JetBrains Mono',monospace; font-size:14px; line-height:1.5; margin:12px 0 0;">Watch it run on its own.</p>
-          </div>
-        </div>
-      </div>
-
+<!-- 2. How it works -->
+<section class="tk-section">
+  <p class="tk-label mono tk-fade">How it works</p>
+  <div class="tk-steps">
+    <div class="tk-step tk-fade">
+      <div class="tk-step-n mono">01</div>
+      <div class="tk-step-word">Show</div>
+      <p class="mono">Do the task yourself with the controllers.</p>
     </div>
-  </section>
+    <div class="tk-step tk-fade">
+      <div class="tk-step-n mono">02</div>
+      <div class="tk-step-word">Guide</div>
+      <p class="mono">Correct the robot as it tries.</p>
+    </div>
+    <div class="tk-step tk-fade">
+      <div class="tk-step-n mono">03</div>
+      <div class="tk-step-word">Done</div>
+      <p class="mono">Watch it run on its own.</p>
+    </div>
+  </div>
+</section>
 
-  <!-- 3. Closing -->
-  <section style="min-height:60vh; display:flex; align-items:center; justify-content:center; padding:24px;">
-    <p style="font-family:'JetBrains Mono',monospace; font-size:15px; text-align:center; margin:0;">Designed and manufactured with love by ex-Apple engineers in SF.</p>
-  </section>
+<!-- 3. Specs -->
+<section class="tk-section" style="padding-top:0;">
+  <p class="tk-label mono tk-fade">Specs</p>
+  <div class="tk-specs tk-fade">
+    <div class="tk-spec"><div class="tk-spec-v">2</div><div class="tk-spec-k mono">Arms</div></div>
+    <div class="tk-spec"><div class="tk-spec-v">Mobile</div><div class="tk-spec-k mono">Base</div></div>
+    <div class="tk-spec"><div class="tk-spec-v">5 kg</div><div class="tk-spec-k mono">Payload at 50% extension</div></div>
+    <div class="tk-spec"><div class="tk-spec-v">650 mm</div><div class="tk-spec-k mono">Reach</div></div>
+  </div>
+</section>
 
-</div>
+<!-- 4. Closing -->
+<section class="tk-close">
+  <p class="tk-close-line mono tk-fade">Designed and manufactured with love by ex-Apple engineers in SF.</p>
+  <a class="mono" href="#tk-signup" id="tk-back">Get notified ↑</a>
+</section>
 
 <script>
   // Email signup wired to Loops
@@ -390,7 +421,8 @@
       const data = await res.json().catch(() => ({}));
       if (res.ok && data && data.success !== false) {
         const success = document.createElement("p");
-        success.style.cssText = "font-family:'JetBrains Mono',monospace; font-size:13px; margin:0;";
+        success.className = "mono";
+        success.style.cssText = "font-size:14px; margin:0;";
         success.textContent = "You're on the list. Watch your inbox.";
         signup.replaceWith(success);
       } else {
@@ -403,36 +435,13 @@
     }
   });
 
-  // How it works: pin the stage while the section scrolls, crossfade steps
-  const storySec = document.getElementById("tk-story");
-  const stage = document.getElementById("tk-stage");
-  const stepEls = document.querySelectorAll(".tk-story-img, .tk-story-word, .tk-tick");
-
-  function onScroll() {
-    const vh = window.innerHeight;
-    const rect = storySec.getBoundingClientRect();
-    const total = rect.height - vh;
-    const p = Math.min(1, Math.max(0, -rect.top / total));
-    const idx = Math.min(2, Math.floor(p * 3));
-
-    if (rect.top <= 0 && rect.bottom >= vh) {
-      stage.style.position = "fixed"; stage.style.top = "0px"; stage.style.bottom = "auto";
-    } else if (rect.top > 0) {
-      stage.style.position = "absolute"; stage.style.top = "0px"; stage.style.bottom = "auto";
-    } else {
-      stage.style.position = "absolute"; stage.style.top = "auto"; stage.style.bottom = "0px";
-    }
-
-    stepEls.forEach((el) => {
-      const active = Number(el.dataset.step) === idx;
-      el.style.opacity = active ? "1" : (el.classList.contains("tk-tick") ? "0.3" : "0");
-    });
-  }
-
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll);
-  onScroll();
+  // "Get notified" scrolls back up and focuses the email field
+  document.getElementById("tk-back").addEventListener("click", (event) => {
+    event.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const input = document.getElementById("tk-email");
+    if (input) setTimeout(() => input.focus({ preventScroll: true }), 400);
+  });
 </script>
-
 </body>
 </html>
