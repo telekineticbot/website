@@ -249,17 +249,42 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .hero-visual { display: contents; }
   .hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; mask-image: linear-gradient(to right, #000 42%, rgba(0,0,0,.38) 62%, rgba(0,0,0,.12) 78%, transparent 94%); }
   .product { position: relative; flex: 1; min-width: 0; max-width: 760px; margin: 0 4vw 0 48vw; padding: 64px 0; }
-  h1 { font-size: clamp(48px, 6vw, 84px); font-weight: 700; line-height: 1; letter-spacing: -.025em; margin: 0 0 14px; }
+  h1 { font-size: clamp(30px, 3.6vw, 54px); font-weight: 700; line-height: 1; letter-spacing: -.025em; margin: 0 0 14px; }
   .signup-note { font-family: var(--mono); font-size: 13px; color: #14140fb3; margin: 0 0 32px; }
-  .product-name { font-size: 20px; font-weight: 600; letter-spacing: .02em; margin: 0 0 28px; }
+  .product-name { display: flex; align-items: center; gap: 12px; font-size: 56px; line-height: 1; font-weight: 600; letter-spacing: -.035em; margin: 0 0 28px; }
+  .brand-logo { display: grid; place-items: center; flex: 0 0 auto; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+  .brand-logo:hover { background: transparent; }
+  .brand-mark { display: block; width: 100%; height: 100%; }
+  .brand-mark .wheel { transform-origin: 128px 128px; }
+  .brand-mark .eye { transform-box: fill-box; transform-origin: center; }
+  .brand-logo.is-playing .wheel { animation: brand-spin 8s linear infinite; }
+  .brand-logo.is-playing .orange { animation: brand-pulse 4s ease-in-out infinite; }
+  .brand-logo.is-playing .eye { animation: brand-blink 4s infinite; }
+  @keyframes brand-spin { to { transform: rotate(360deg); } }
+  @keyframes brand-pulse { 0%,100% { fill: #ff7122; } 50% { fill: #ff8945; } }
+  @keyframes brand-blink { 0%,57%,65%,100% { transform: scaleY(1); } 60%,62% { transform: scaleY(.08); } }
   .specs { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0; list-style: none; font-family: var(--mono); font-size: 12px; line-height: 1.6; margin: 12px 0 0; }
   .specs li { white-space: nowrap; }
   .specs li + li { border-left: 1px solid #14140f40; padding-left: 14px; }
-  h1 span { display: block; white-space: nowrap; }
+  .headline-intro, .headline-ending { display: block; white-space: nowrap; }
+  .headline-dial { position: relative; display: block; height: 1.4em; overflow: hidden; perspective: 1000px; font-size: inherit; line-height: 1.3; letter-spacing: -.04em; }
+  .dial-task { position: absolute; inset: 0; display: block; white-space: nowrap; opacity: 0; transform: translateY(55%) rotateX(-12deg); transform-origin: center center; will-change: transform, opacity; animation: dial-turn 24s infinite both; }
+  .dial-task:nth-child(1) { animation-delay: -1.6s; }
+  .dial-task:nth-child(2) { animation-delay: 4.4s; }
+  .dial-task:nth-child(3) { animation-delay: 10.4s; }
+  .dial-task:nth-child(4) { animation-delay: 16.4s; }
+  .dial-task span { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: .12em; }
+  @keyframes dial-turn {
+    0% { opacity: 0; transform: translateY(55%) rotateX(-12deg); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+    6.666667% { opacity: 1; transform: translateY(0) rotateX(0); }
+    25% { opacity: 1; transform: translateY(0) rotateX(0); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+    31.666667%, 100% { opacity: 0; transform: translateY(-55%) rotateX(12deg); }
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .purchase { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 20px 0 0; font-family: var(--mono); font-size: 14px; }
   .price, .availability { font: inherit; }
   .signup { width: 100%; max-width: 440px; }
-  form { display: flex; width: 100%; border: 1px solid #14140f80; background: #ffffff0d; }
+  form { display: flex; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #14140f80; background: #ffffff0d; }
   input { width: 0; flex: 1; min-width: 0; padding: 12px 14px; background: transparent; color: var(--ink); border: 0; border-radius: 0; font-family: var(--mono); font-size: 14px; }
   input::placeholder { color: #14140fb3; opacity: 1; }
   button { border: 0; border-left: 1px solid #14140f80; padding: 12px 20px; background: var(--accent); color: var(--ink); font: 700 14px 'Manrope', sans-serif; cursor: pointer; transition: background .2s; white-space: nowrap; }
@@ -275,8 +300,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     body { background: #c2c2bb; }
     .hero { display: block; min-height: 0; }
     .hero-photo { position: relative; display: block; inset: auto; width: 100%; height: auto; transform: none; mask-image: none; }
-    .product { width: auto; max-width: none; margin: 0; padding: 28px 24px 48px; }
-    h1 { font-size: 40px; margin-bottom: 12px; }
+    .product { width: auto; max-width: none; margin: 0; padding: 32px 20px 48px; }
+    h1 { font-size: clamp(27px, calc(10vw - 5px), 52px); line-height: 1.08; letter-spacing: -.045em; margin-bottom: 24px; }
+    .product-name { font-size: 46px; margin-bottom: 24px; gap: 10px; }
+    .brand-logo { width: 40px; height: 40px; }
     .signup-note { margin-bottom: 24px; }
     .specs, .signup { max-width: none; }
     .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-top: 24px; }
@@ -285,7 +312,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .footer { position: relative; left: auto; right: auto; bottom: auto; padding: 0 26px 24px; font-size: 9px; }
     .footer-note { max-width: 130px; }
   }
-  @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+    .brand-logo.is-playing .wheel, .brand-logo.is-playing .orange, .brand-logo.is-playing .eye { animation: none; }
+    .dial-task { animation: none; opacity: 0; transform: none; }
+    .dial-task:first-child { opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -299,8 +331,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <img class="hero-photo" src="assets/robot-studio.png" alt="A white Telekinetic robot with two polished metal arms and a mobile base in a softly lit gray studio" fetchpriority="high" width="1536" height="1024">
   </picture>
   <section class="product" aria-labelledby="headline">
-    <p class="product-name">Telekinetic</p>
-    <h1 id="headline"><span>Teach your</span><span>own robot</span><span>in minutes</span></h1>
+    <div class="product-name"><button class="brand-logo" type="button" aria-label="Animate Telekinetic logo"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false">
+
+
+
+<circle cx="128" cy="128" r="112" fill="#fff"/>
+<path class="orange" fill="#ff7122" d="M125 28C163 28 197 40 216 73C232 98 236 117 230 141C226 169 213 199 186 216C161 231 126 236 96 226C66 218 44 202 33 176C22 150 24 120 31 94C37 66 50 43 78 35C95 30 111 29 125 28Z"/>
+<path class="wheel" fill="#14140f" d="M100 69C111 61 121 65 124 75C128 85 118 93 108 102C87 120 83 136 89 154C97 177 124 185 149 181C174 177 192 161 193 143C195 124 185 104 174 92C164 81 153 75 145 73C140 71 140 69 145 70C166 75 181 88 192 106C205 126 211 144 204 162C195 186 175 199 146 203C120 207 94 203 77 191C58 178 53 155 56 133C58 107 74 87 100 69Z"/>
+<rect x="105" y="118" width="46" height="28" rx="8" fill="none" stroke="#14140f" stroke-width="4.5"/>
+<circle class="eye" cx="119" cy="132" r="4" fill="#14140f"/>
+<circle class="eye" cx="137" cy="132" r="4" fill="#14140f"/>
+</svg>
+</button><span>Telekinetic</span></div>
+    <h1 id="headline">
+      <span class="headline-intro">Teach your robot to</span>
+      <span class="headline-dial" aria-hidden="true">
+        <span class="dial-task"><span>make you espresso</span></span>
+        <span class="dial-task"><span>wipe down the counter</span></span>
+        <span class="dial-task"><span>clean your bathroom</span></span>
+        <span class="dial-task"><span>make you an omelette</span></span>
+      </span>
+      <span class="sr-only">make you espresso, wipe down the counter, clean your bathroom, or make you an omelette</span>
+      <span class="headline-ending">in minutes.</span>
+    </h1>
     <p class="signup-note">Sign ups open now</p>
     <div id="tk-signup" class="signup">
       <form id="tk-form" novalidate aria-label="Get notified about Telekinetic">
@@ -318,6 +371,56 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </footer>
 </main>
 <script>
+  // Play full logo cycles on interaction, or occasionally while visible.
+  const brandLogo = document.querySelector('.brand-logo');
+  const logoMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let logoVisible = false;
+  let logoHovered = false;
+  let logoFocused = false;
+  let logoIdleTimer;
+  let logoCycleTimer;
+  function scheduleLogoIdle() {
+    clearTimeout(logoIdleTimer);
+    if (logoMotion.matches || document.hidden || !logoVisible || brandLogo.classList.contains('is-playing')) return;
+    logoIdleTimer = setTimeout(playLogo, 18000 + Math.random() * 22000);
+  }
+  function finishLogoCycle() {
+    if (!logoMotion.matches && !document.hidden && logoVisible && (logoHovered || logoFocused)) {
+      logoCycleTimer = setTimeout(finishLogoCycle, 8000);
+      return;
+    }
+    brandLogo.classList.remove('is-playing');
+    scheduleLogoIdle();
+  }
+  function playLogo() {
+    if (logoMotion.matches || document.hidden || !logoVisible || brandLogo.classList.contains('is-playing')) return;
+    clearTimeout(logoIdleTimer);
+    brandLogo.classList.add('is-playing');
+    logoCycleTimer = setTimeout(finishLogoCycle, 8000);
+  }
+  function stopLogo() {
+    clearTimeout(logoIdleTimer);
+    clearTimeout(logoCycleTimer);
+    brandLogo.classList.remove('is-playing');
+  }
+  brandLogo.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') { logoHovered = true; playLogo(); } });
+  brandLogo.addEventListener('pointerleave', () => { logoHovered = false; });
+  brandLogo.addEventListener('focus', () => { logoFocused = brandLogo.matches(':focus-visible'); if (logoFocused) playLogo(); });
+  brandLogo.addEventListener('blur', () => { logoFocused = false; });
+  brandLogo.addEventListener('click', playLogo);
+  new IntersectionObserver(([entry]) => {
+    logoVisible = entry.isIntersecting;
+    if (!logoVisible) stopLogo();
+    else if (logoHovered || logoFocused) playLogo();
+    else scheduleLogoIdle();
+  }).observe(brandLogo);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopLogo();
+    else if (logoHovered || logoFocused) playLogo();
+    else scheduleLogoIdle();
+  });
+  logoMotion.addEventListener('change', () => { stopLogo(); if (logoHovered || logoFocused) playLogo(); else scheduleLogoIdle(); });
+
   // Email signup wired to Loops
   const LOOPS_FORM_ID = "cmqjtqvul09p20j1ea906orra";
 
