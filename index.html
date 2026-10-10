@@ -268,17 +268,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .specs li + li { border-left: 1px solid #14140f40; padding-left: 14px; }
   .headline-intro, .headline-ending { display: block; white-space: nowrap; }
   .headline-dial { position: relative; display: block; height: 1.4em; overflow: hidden; perspective: 1000px; font-size: inherit; line-height: 1.3; letter-spacing: -.04em; }
-  .dial-task { position: absolute; inset: 0; display: block; white-space: nowrap; opacity: 0; transform: translateY(55%) rotateX(-12deg); transform-origin: center center; will-change: transform, opacity; animation: dial-turn 24s infinite both; }
-  .dial-task:nth-child(1) { animation-delay: -1.6s; }
-  .dial-task:nth-child(2) { animation-delay: 4.4s; }
-  .dial-task:nth-child(3) { animation-delay: 10.4s; }
-  .dial-task:nth-child(4) { animation-delay: 16.4s; }
+  .dial-task { position: absolute; inset: 0; display: block; white-space: nowrap; opacity: 0; transform: translateY(55%) rotateX(-12deg); transform-origin: center center; will-change: transform, opacity; animation: dial-turn 12s infinite both, dial-fade 12s linear infinite both; }
+  .dial-task:nth-child(1) { animation-delay: -2.35s; }
+  .dial-task:nth-child(2) { animation-delay: .65s; }
+  .dial-task:nth-child(3) { animation-delay: 3.65s; }
+  .dial-task:nth-child(4) { animation-delay: 6.65s; }
   .dial-task span { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: .12em; }
   @keyframes dial-turn {
-    0% { opacity: 0; transform: translateY(55%) rotateX(-12deg); animation-timing-function: cubic-bezier(.4,0,.2,1); }
-    6.666667% { opacity: 1; transform: translateY(0) rotateX(0); }
-    25% { opacity: 1; transform: translateY(0) rotateX(0); animation-timing-function: cubic-bezier(.4,0,.2,1); }
-    31.666667%, 100% { opacity: 0; transform: translateY(-55%) rotateX(12deg); }
+    0% { transform: translateY(100%) rotateX(-12deg); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+    19.583333% { transform: translateY(0) rotateX(0); }
+    25% { transform: translateY(0) rotateX(0); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+    44.583333%, 100% { transform: translateY(-100%) rotateX(12deg); }
+  }
+  @keyframes dial-fade {
+    0%, 6.666667% { opacity: 0; }
+    19.583333%, 25% { opacity: 1; }
+    35.833333%, 100% { opacity: 0; }
   }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .purchase { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 20px 0 0; font-family: var(--mono); font-size: 14px; }

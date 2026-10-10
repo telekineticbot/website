@@ -1,6 +1,17 @@
 # Website previews
 
-- [Desktop video](desktop.mp4)
-- [Mobile video](mobile.mp4)
+## Desktop
 
-These 24-second, 60 fps browser recordings show the complete rotating headline cycle and the animated logo. The logo is active to demonstrate its motion. In normal use it plays on hover, keyboard focus or tap, plus occasional idle cycles while visible. Google requests were intercepted during recording.
+![Desktop animation](desktop.gif)
+
+[60 fps MP4](desktop.mp4)
+
+## Mobile
+
+![Mobile animation](mobile.gif)
+
+[60 fps MP4](mobile.mp4)
+
+Each recording shows the complete 12-second headline cycle and an active logo. Each phrase has 2.35 seconds of rolling motion and a 0.65-second hold, with staggered fades to avoid overlapping text. The GIFs provide inline playback in GitHub Markdown; the MP4s retain 60 fps playback.
+
+In normal use the logo plays on hover, keyboard focus or tap, plus occasional idle cycles while visible. Reduced-motion preferences disable animation. Google requests were intercepted during recording.
