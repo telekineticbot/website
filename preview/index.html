@@ -6,7 +6,6 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#b9bbb5" media="(min-width: 761px) and (min-aspect-ratio: 10001 / 10000)">
-<meta name="theme-color" content="#c2c2bb" media="(max-width: 760px), (max-aspect-ratio: 1 / 1)">
 <title>Preview — Telekinetic — Teach your own robot in minutes</title>
 <meta name="description" content="Teach your own robot in minutes. Two arms, a mobile base, and 650 mm of reach. $2,999. December 2026.">
 <meta property="og:type" content="website">
@@ -307,7 +306,10 @@
   }
   @media (max-width: 760px), (max-aspect-ratio: 1 / 1) {
     .studio-extension { display: none; }
-    html, body { background: #c2c2bb; }
+    /* Let Safari derive its chrome tint from the page instead of forcing a pale band.
+       The canvas also matches the photo at the top and the studio floor at the bottom. */
+    html { background: #989998 linear-gradient(to bottom, #989998, #c2c2bb min(150vw, 100%)); }
+    body { background: transparent; }
     /* The empty right side of the extended studio scene continues behind the content. */
     .hero { display: block; min-height: 100svh; min-height: 100dvh; padding: 0; isolation: isolate; }
     .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('assets/robot-studio-extended.png') right bottom / cover no-repeat; filter: brightness(.94) sepia(.05); pointer-events: none; }
