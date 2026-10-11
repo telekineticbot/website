@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+<title id="title">Telekinetic animated logo</title>
+<desc id="desc">An orange robot badge with a rotating brushstroke ring, blinking eyes, and a softly pulsing orange background.</desc>
+<style>
+.wheel{transform-origin:128px 128px;animation:spin 8s linear infinite}
+.orange{animation:pulse 4s ease-in-out infinite}
+.eye{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{fill:#ff7122}50%{fill:#ff8945}}
+@keyframes blink{0%,57%,65%,100%{transform:scaleY(1)}60%,62%{transform:scaleY(.08)}}
+@media(prefers-reduced-motion:reduce){.wheel,.orange,.eye{animation:none}}
+</style>
+<circle cx="128" cy="128" r="112" fill="#fff"/>
+<path class="orange" fill="#ff7122" d="M125 28C163 28 197 40 216 73C232 98 236 117 230 141C226 169 213 199 186 216C161 231 126 236 96 226C66 218 44 202 33 176C22 150 24 120 31 94C37 66 50 43 78 35C95 30 111 29 125 28Z"/>
+<path class="wheel" fill="#14140f" d="M100 69C111 61 121 65 124 75C128 85 118 93 108 102C87 120 83 136 89 154C97 177 124 185 149 181C174 177 192 161 193 143C195 124 185 104 174 92C164 81 153 75 145 73C140 71 140 69 145 70C166 75 181 88 192 106C205 126 211 144 204 162C195 186 175 199 146 203C120 207 94 203 77 191C58 178 53 155 56 133C58 107 74 87 100 69Z"/>
+<rect x="105" y="118" width="46" height="28" rx="8" fill="none" stroke="#14140f" stroke-width="4.5"/>
+<circle class="eye" cx="119" cy="132" r="4" fill="#14140f"/>
+<circle class="eye" cx="137" cy="132" r="4" fill="#14140f"/>
+</svg>
