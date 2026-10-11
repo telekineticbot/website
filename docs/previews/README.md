@@ -22,4 +22,4 @@ In normal use the logo plays on hover, keyboard focus or tap, plus occasional id
 
 [30 fps resize video](responsive.mp4)
 
-The viewport moves from 1440px to 390px and back. Desktop and tablet share a fluid two-column image layout. All widths use the same transparent robot cutout on a uniform gray page background. There are no photo backgrounds, fade masks, or visible rectangular image boundaries. Phones center the robot above the content and cap the photo width at 340px. The layout still reflows into one column at 600px.
+The viewport moves from 1440px to 390px and back. Every size uses the same extended studio photograph behind the entire page, retaining the robot’s cast shadow, lighting, and floor texture. The photo extends under the content and footer with no masks or image-panel edges. Phones pan the same scene to center the robot above the text; the layout reflows into one column at 600px.
