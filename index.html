@@ -10,8 +10,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-W44566MH');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#b9bbb5" media="(min-width: 601px)">
-<meta name="theme-color" content="#c2c2bb" media="(max-width: 600px)">
+<meta name="theme-color" content="#b9bbb5" media="(min-width: 761px) and (min-aspect-ratio: 10001 / 10000)">
+<meta name="theme-color" content="#c2c2bb" media="(max-width: 760px), (max-aspect-ratio: 1 / 1)">
 <title>Telekinetic — Teach your own robot in minutes</title>
 <meta name="description" content="Teach your own robot in minutes. Two arms, a mobile base, and 650 mm of reach. $2,999. December 2026.">
 <meta property="og:type" content="website">
@@ -249,9 +249,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .hero-visual { display: block; }
   .hero-photo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; pointer-events: none; }
   .studio-extension { position: absolute; top: 0; pointer-events: none; transform: scaleX(-1); }
-  .product { position: relative; min-width: 0; max-width: 760px; margin: max(0px, calc(50svh - 320px)) 0 0; padding: 32px 4vw 32px 12px; }
+  .product { container-type: inline-size; position: relative; min-width: 0; max-width: 760px; margin: max(0px, calc(50svh - 320px)) 0 0; padding: 32px 4vw 32px 12px; }
 
-  h1 { font-size: clamp(27px, 3.6vw, 54px); font-weight: 700; line-height: 1; letter-spacing: -.025em; margin: 0 0 14px; }
+  h1 { font-size: min(54px, 3.6vw, 9.2cqw); font-weight: 700; line-height: 1; letter-spacing: -.025em; margin: 0 0 14px; }
   .signup-note { font-family: var(--mono); font-size: 13px; color: #14140fb3; margin: 0 0 32px; }
   .product-name { display: flex; align-items: center; gap: 8px; font-size: 20px; line-height: 1.2; font-weight: 600; letter-spacing: .02em; margin: 0 0 28px; }
   .brand-logo { position: relative; display: grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
@@ -273,22 +273,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* Manrope’s visible letters sit .08em below the line-box center. Offset the
      viewport and rotation axis to center both fades on the letters themselves. */
   .headline-dial { color: var(--accent); position: relative; display: grid; width: max-content; max-width: 100%; height: 2em; padding-block: .22em .38em; margin-block: -.22em -.38em; overflow: hidden; perspective: 10em; mask-image: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent); font-size: inherit; line-height: 1.3; letter-spacing: -.04em; }
-  .dial-task { position: relative; grid-area: 1 / 1; display: block; white-space: nowrap; opacity: 0; transform: rotateX(-70deg); transform-origin: center calc(50% + .08em) -.85em; backface-visibility: hidden; will-change: transform, opacity; animation: dial-turn 12s infinite both, dial-fade 12s linear infinite both; }
+  .dial-task { position: relative; grid-area: 1 / 1; display: block; white-space: nowrap; opacity: 0; transform: rotateX(-70deg); transform-origin: center calc(50% + .08em) -.85em; backface-visibility: hidden; will-change: transform, opacity; animation: dial-turn 12s infinite both; }
   .dial-task:nth-child(1) { animation-delay: -2.35s; }
   .dial-task:nth-child(2) { animation-delay: .65s; }
   .dial-task:nth-child(3) { animation-delay: 3.65s; }
   .dial-task:nth-child(4) { animation-delay: 6.65s; }
   .dial-task > span { display: inline-block; }
   @keyframes dial-turn {
-    0% { transform: rotateX(-70deg); animation-timing-function: cubic-bezier(.4,0,.2,1); }
-    19.583333% { transform: rotateX(0); }
-    25% { transform: rotateX(0); animation-timing-function: cubic-bezier(.4,0,.2,1); }
-    44.583333%, 100% { transform: rotateX(70deg); }
-  }
-  @keyframes dial-fade {
-    0%, 8.75% { opacity: 0; }
-    19.583333%, 25% { opacity: 1; }
-    35.833333%, 100% { opacity: 0; }
+    0% { opacity: 0; transform: rotateX(-70deg); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+    19.583333% { opacity: 1; transform: rotateX(0); }
+    25% { opacity: 1; transform: rotateX(0); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+    44.583333%, 100% { opacity: 0; transform: rotateX(70deg); }
   }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .purchase { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 20px 0 0; font-family: var(--mono); font-size: 14px; }
@@ -315,7 +310,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .specs li + li { border-left: 0; padding-left: 0; }
     .footer { left: 28px; right: 28px; }
   }
-  @media (max-width: 600px) {
+  @media (max-width: 760px), (max-aspect-ratio: 1 / 1) {
     .studio-extension { display: none; }
     html, body { background: #c2c2bb; }
     /* The empty right side of the extended studio scene continues behind the content. */
@@ -324,7 +319,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .hero-visual { display: block; }
     .hero-photo { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; object-position: left top; inset: auto; mask-image: linear-gradient(to bottom, #000 93%, transparent 100%); }
     .product { width: auto; max-width: 560px; margin: 0 auto; padding: 32px max(20px, env(safe-area-inset-right)) 48px max(20px, env(safe-area-inset-left)); }
-    h1 { font-size: clamp(27px, calc(10vw - 5px), 48px); line-height: 1.08; letter-spacing: -.045em; margin-bottom: 24px; }
+    h1 { font-size: min(48px, 9.2cqw); line-height: 1.08; letter-spacing: -.045em; margin-bottom: 24px; }
     .product-name { font-size: 15px; margin-bottom: 24px; gap: 6px; }
     .brand-mark { width: 14px; height: 14px; }
     .signup-note { margin-bottom: 24px; }
@@ -395,6 +390,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </footer>
 </main>
 <script>
+  // Stack before a tall viewport makes the robot intrude into the text column.
+  const stackedLayout = window.matchMedia("(max-width: 760px), (max-aspect-ratio: 1 / 1)");
   // Fit the original landscape photo by height so the full robot stays in frame.
   const hero = document.querySelector('.hero');
   const studioPhoto = document.querySelector('.hero-photo');
@@ -402,7 +399,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function fitStudioPhoto() {
     const width = hero.clientWidth;
     const height = hero.clientHeight;
-    const mobile = width <= 600;
+    const mobile = stackedLayout.matches;
     if (mobile) {
       // Use the sharp original studio photo; the mobile crop retains its cast shadow.
       studioPhoto.style.removeProperty('width');
@@ -421,6 +418,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     studioExtension.style.height = `${photoHeight}px`;
     studioExtension.style.left = `${left + photoWidth}px`;
   }
+  stackedLayout.addEventListener("change", fitStudioPhoto);
   fitStudioPhoto();
   new ResizeObserver(fitStudioPhoto).observe(hero);
 
