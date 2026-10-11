@@ -11,7 +11,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#b9bbb5" media="(min-width: 761px) and (min-aspect-ratio: 10001 / 10000)">
-<meta name="theme-color" content="#c2c2bb" media="(max-width: 760px), (max-aspect-ratio: 1 / 1)">
 <title>Telekinetic — Teach your own robot in minutes</title>
 <meta name="description" content="Teach your own robot in minutes. Two arms, a mobile base, and 650 mm of reach. $2,999. December 2026.">
 <meta property="og:type" content="website">
@@ -312,7 +311,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   @media (max-width: 760px), (max-aspect-ratio: 1 / 1) {
     .studio-extension { display: none; }
-    html, body { background: #c2c2bb; }
+    /* Paint the studio on the root canvas too: Safari can expose that canvas
+       behind its safe areas and translucent controls, outside the hero box. */
+    html {
+      background-color: #989998;
+      background-image: url('assets/robot-studio.png'), url('assets/robot-studio-extended.png');
+      background-position: left top, right bottom;
+      background-size: auto 150vw, cover;
+      background-repeat: no-repeat;
+      overscroll-behavior-y: none;
+    }
+    body { background: transparent; }
     /* The empty right side of the extended studio scene continues behind the content. */
     .hero { display: block; min-height: 100svh; min-height: 100dvh; padding: 0; isolation: isolate; }
     .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('assets/robot-studio-extended.png') right bottom / cover no-repeat; filter: brightness(.94) sepia(.05); pointer-events: none; }
