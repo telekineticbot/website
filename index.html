@@ -311,9 +311,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   @media (max-width: 760px), (max-aspect-ratio: 1 / 1) {
     .studio-extension { display: none; }
-    /* Let Safari derive its chrome tint from the page instead of forcing a pale band.
-       The canvas also matches the photo at the top and the studio floor at the bottom. */
-    html { background: #989998 linear-gradient(to bottom, #989998, #c2c2bb min(150vw, 100%)); }
+    /* Paint the studio on the root canvas too: Safari can expose that canvas
+       behind its safe areas and translucent controls, outside the hero box. */
+    html {
+      background-color: #989998;
+      background-image: url('assets/robot-studio.png'), url('assets/robot-studio-extended.png');
+      background-position: left top, right bottom;
+      background-size: auto 150vw, cover;
+      background-repeat: no-repeat;
+      overscroll-behavior-y: none;
+    }
     body { background: transparent; }
     /* The empty right side of the extended studio scene continues behind the content. */
     .hero { display: block; min-height: 100svh; min-height: 100dvh; padding: 0; isolation: isolate; }
