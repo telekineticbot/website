@@ -5,7 +5,6 @@
 <meta charset="utf-8">
 <!-- Direct GA4: Telekinetic web stream, initialized by /assets/analytics.js. -->
 <script src="assets/analytics.js"></script>
-<script src="assets/replay.js"></script>
 <script src="assets/behavior.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -372,7 +371,7 @@
     <p class="signup-note">Sign ups open now</p>
     <div id="tk-signup" class="signup">
       <form id="tk-form" novalidate aria-label="Get notified about Telekinetic">
-        <input data-clarity-mask="true" id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
+        <input id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
         <button id="tk-submit" type="submit">Notify me</button>
       </form>
       <p id="tk-error" class="form-message" role="alert"></p>

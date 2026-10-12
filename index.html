@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <!-- Direct GA4: Telekinetic web stream, initialized by /assets/analytics.js. -->
 <script src="/assets/analytics.js"></script>
-<script src="/assets/replay.js"></script>
 <script src="/assets/behavior.js"></script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -387,7 +386,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="signup-note">Sign ups open now</p>
     <div id="tk-signup" class="signup">
       <form id="tk-form" novalidate aria-label="Get notified about Telekinetic">
-        <input data-clarity-mask="true" id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
+        <input id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
         <button id="tk-submit" type="submit">Notify me</button>
       </form>
       <p id="tk-error" class="form-message" role="alert"></p>
