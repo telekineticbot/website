@@ -42,8 +42,7 @@ seconds (seconds), percent_scrolled and attempt_number (standard).
 
 Use arbitrary opaque referral IDs; keep recipient mappings outside analytics. No email
 value, input content, response body, raw error message, or stack trace is added to the
-explicit events. Preview traffic is excluded. `data-clarity-mask` marks the email input
-for any future Clarity installation; this attribute alone does not load or enable replay.
+explicit events. Preview traffic is excluded.
 
 ## Validation
 
@@ -53,20 +52,3 @@ suppression, and parameter allowlisting. Tests mock Loops and never send email.
 
 After deployment, verify harmless interactions in GA4 Realtime. Allow standard reports
 time to process new definitions. Historical untracked actions cannot be recovered.
-
-## Clarity heatmaps and session replay
-
-Project: https://clarity.microsoft.com/projects/view/ywrpm8qywl/dashboard
-
-`assets/replay.js` loads Clarity only after the visitor chooses Allow replay. Default
-masking is Balanced, with an explicit mask on the email input. Advertising storage is
-denied; analytics storage is granted only after opt-in. Replay privacy allows withdrawal,
-which clears first-party Clarity cookies and reloads without the recorder. Global Privacy
-Control and Do Not Track override saved opt-in. Preview and non-production hosts never
-load Clarity. The public disclosure is `/privacy.html`.
-
-The five smart event names forwarded after opt-in are signup_start, signup_attempt,
-signup_error, generate_lead, and site_error. No form values or raw errors are forwarded.
-Clarity does not backfill interactions from before consent. Heatmaps and recordings
-need real opted-in traffic and processing time; absence of recordings is not zero visits.
-GA4 remains the quantitative source of traffic and conversions.
