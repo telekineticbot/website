@@ -20,6 +20,7 @@
       });
       window.gtag('event', name, data);
     } catch (_) { /* Analytics must never break the signup flow. */ }
+    try { if (window.tkReplayEvent) window.tkReplayEvent(name); } catch (_) {}
   };
   if (disabled) return;
   var track = window.tkTrack;
