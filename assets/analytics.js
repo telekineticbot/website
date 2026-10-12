@@ -3,6 +3,8 @@
  */
 (function () {
   'use strict';
+  // Review pages must not inflate production traffic or outreach conversions.
+  if (window.location.pathname.indexOf('/preview') === 0) return;
   var measurementId = 'G-PV6WD20E5Q';
 
   var referral = new URL(window.location.href).searchParams.get('r');

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <!-- Direct GA4: Telekinetic web stream, initialized by /assets/analytics.js. -->
 <script src="/assets/analytics.js"></script>
+<script src="/assets/behavior.js"></script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -385,7 +386,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="signup-note">Sign ups open now</p>
     <div id="tk-signup" class="signup">
       <form id="tk-form" novalidate aria-label="Get notified about Telekinetic">
-        <input id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
+        <input data-clarity-mask="true" id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
         <button id="tk-submit" type="submit">Notify me</button>
       </form>
       <p id="tk-error" class="form-message" role="alert"></p>
@@ -490,24 +491,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const submitBtn = document.getElementById("tk-submit");
   const errorEl = document.getElementById("tk-error");
 
+  const trackSignup = (name, details = {}) => {
+    try { window.tkTrack?.(name, { form_id: 'notify_me', ...details }); } catch (_) {}
+  };
+  let signupStarted = false;
+  let signupAttempts = 0;
+  emailInput.addEventListener('input', () => {
+    if (!signupStarted && emailInput.value.trim()) {
+      signupStarted = true;
+      trackSignup('signup_start');
+    }
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (submitBtn.disabled) return;
+    signupAttempts += 1;
+    trackSignup('signup_attempt', { attempt_number: signupAttempts });
     const email = emailInput.value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      trackSignup('signup_error', { error_type: 'invalid_email' });
       errorEl.textContent = "Please enter a valid email.";
       return;
     }
     errorEl.textContent = "";
     submitBtn.disabled = true;
     submitBtn.textContent = "…";
+    const signupRequestStart = performance.now();
+    let signupStatus = 0;
+    let signupFailure = 'network';
     try {
       const res = await fetch("https://app.loops.so/api/newsletter-form/" + LOOPS_FORM_ID, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ email }).toString(),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data && data.success !== false) {
+      signupStatus = res.status;
+      signupFailure = 'invalid_response';
+      const data = await res.json();
+      signupFailure = 'server_rejected';
+      if (res.ok && data && data.success === true) {
+        trackSignup('generate_lead', { response_time_ms: Math.round(performance.now() - signupRequestStart) });
         const success = document.createElement("p");
         success.style.cssText = "font-family:'JetBrains Mono',monospace; font-size:13px; margin:0;";
         success.textContent = "You're on the list. Watch your inbox.";
@@ -517,6 +541,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         throw new Error("err");
       }
     } catch (err) {
+      trackSignup('signup_error', {
+        error_type: signupFailure, http_status: signupStatus,
+        response_time_ms: Math.round(performance.now() - signupRequestStart)
+      });
       submitBtn.disabled = false;
       submitBtn.textContent = "Notify me";
       errorEl.textContent = "Couldn't sign you up. Please try again.";

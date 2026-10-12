@@ -24,6 +24,8 @@ html = subprocess.check_output(['git', 'show', f'{revision}:index.html'], text=T
 html = re.sub(r'<!-- Google Tag Manager(?: \(noscript\))? -->.*?<!-- End Google Tag Manager(?: \(noscript\))? -->', '', html, flags=re.S)
 html = html.replace('<head>', '<head>\n<meta name="robots" content="noindex, nofollow">')
 html = html.replace('<title>', '<title>Preview — ', 1)
+# Use the reviewed assets rather than production tracking code.
+html = html.replace('src="/assets/', 'src="assets/')
 # Exercise the controls without adding test addresses to the live mailing list.
 html = html.replace('    errorEl.textContent = "";\n    submitBtn.disabled = true;',
                     '    errorEl.textContent = "Preview only — no email was submitted.";\n    return;\n    submitBtn.disabled = true;')
