@@ -1,11 +1,9 @@
-/* GA4 setup: REPLACE G-XXXXXXXXXX with your GA4 web stream measurement ID.
- * Admin > Data streams > your web stream > Measurement ID.
- * This tag is installed directly; do not also configure a GA4 pageview tag in GTM.
+/* Direct GA4 for the Telekinetic web stream.
+ * Keep GA4 pageview tags out of GTM to avoid duplicate pageviews.
  */
 (function () {
   'use strict';
-  var measurementId = 'G-XXXXXXXXXX'; // REQUIRED: replace before deploying analytics.
-  if (measurementId === 'G-XXXXXXXXXX') return;
+  var measurementId = 'G-PV6WD20E5Q';
 
   var referral = new URL(window.location.href).searchParams.get('r');
   var refId = referral;
