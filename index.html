@@ -21,16 +21,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="theme-color" content="#b9bbb5" media="(min-width: 761px) and (min-aspect-ratio: 10001 / 10000)">
 <meta name="theme-color" content="#c2c2bb" media="(max-width: 760px), (max-aspect-ratio: 1 / 1)">
 <title>Telekinetic — Teach your own robot in minutes</title>
-<meta name="description" content="Teach your own robot in minutes. Two arms, a mobile base, and 650 mm of reach. $2,999. December 2026.">
+<meta name="description" content="Teach your own robot in minutes. 5 kg payload, 650 mm reach. $2,999. December 2026.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Telekinetic — Teach your own robot in minutes">
-<meta property="og:description" content="Two arms. A mobile base. Yours to teach. $2,999. December 2026.">
-<meta property="og:image" content="https://telekinetic.bot/assets/robot-studio.png">
+<meta property="og:description" content="Yours to teach. $2,999. December 2026.">
+<meta property="og:image" content="https://telekinetic.bot/assets/robot-studio.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Telekinetic — Teach your own robot in minutes">
-<meta name="twitter:description" content="Two arms. A mobile base. Yours to teach. $2,999. December 2026.">
-<meta name="twitter:image" content="https://telekinetic.bot/assets/robot-studio.png">
-<link rel="preload" as="image" href="assets/robot-studio.png">
+<meta name="twitter:description" content="Yours to teach. $2,999. December 2026.">
+<meta name="twitter:image" content="https://telekinetic.bot/assets/robot-studio.jpg">
+<link rel="preload" as="image" href="assets/robot-studio.jpg" media="(min-width: 761px) and (min-aspect-ratio: 10001 / 10000)">
 <style>/* cyrillic-ext */
 @font-face {
   font-family: 'JetBrains Mono';
@@ -298,7 +298,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .price, .availability { font: inherit; }
   .signup { width: 100%; max-width: 440px; }
   form { display: flex; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #14140f80; background: #ffffff0d; }
-  input { width: 0; flex: 1; min-width: 0; padding: 12px 14px; background: transparent; color: var(--ink); border: 0; border-radius: 0; font-family: var(--mono); font-size: 14px; }
+  input { width: 0; flex: 1; min-width: 0; padding: 12px 14px; background: transparent; color: var(--ink); border: 0; border-radius: 0; font-family: var(--mono); font-size: 16px; }
   input::placeholder { color: #14140fb3; opacity: 1; }
   button { border: 0; border-left: 1px solid #14140f80; padding: 12px 20px; background: var(--accent); color: var(--ink); font: 700 14px 'Manrope', sans-serif; cursor: pointer; transition: background .2s; white-space: nowrap; }
   button:hover { background: #ff8c4b; }
@@ -306,7 +306,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   :focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
   form:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
   input:focus-visible { outline: none; }
-  .form-message { min-height: 1.6em; margin: 10px 0 0; font-family: var(--mono); font-size: 11px; line-height: 1.6; }
+  .form-message { min-height: 1.6em; margin: 10px 0 0; font-family: var(--mono); font-size: 13px; line-height: 1.6; color: #9b0f45; }
+  .share { display: grid; gap: 10px; width: 100%; max-width: 440px; margin: 14px 0 0; font-family: var(--mono); font-size: 13px; }
+  .share[hidden] { display: none; }
+  .signup-done { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 10px 14px; border: 1px solid #1f7a3a40; border-radius: 10px; background: #d5ead7; color: #14532d; font-family: var(--mono); font-size: 13px; line-height: 1.4; }
+  .signup-done::before { content: ''; flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; background: #1f7a3a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.6l4.5-5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
+  .share-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .share-row p { margin: 0; }
+  .share-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-width: 44px; min-height: 36px; padding: 8px 14px; border: 1px solid #14140f80; border-radius: 10px; background: #ffffff0d; color: var(--ink); font: 700 13px 'Manrope', sans-serif; text-decoration: none; }
+  .share-button:hover { background: #ffffff40; }
   .footer { position: absolute; bottom: 30px; left: 40px; right: 40px; display: flex; justify-content: space-between; align-items: end; gap: 24px; font-family: var(--mono); font-size: 10px; line-height: 1.8; color: #14140fb3; }
   .footer p { margin: 0; }
   .footer-note { text-align: right; }
@@ -314,8 +322,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   @media (min-width: 601px) and (max-width: 1100px) {
     .product-name { font-size: clamp(15px, 1.8vw, 20px); }
     .brand-mark { width: clamp(14px, 1.64vw, 18px); height: clamp(14px, 1.64vw, 18px); }
-    .specs { display: grid; max-width: 440px; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-top: 24px; }
-    .specs li + li { border-left: 0; padding-left: 0; }
     .footer { left: 28px; right: 28px; }
   }
   @media (max-width: 760px), (max-aspect-ratio: 1 / 1) {
@@ -323,7 +329,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     html, body { background: #c2c2bb; }
     /* The empty right side of the extended studio scene continues behind the content. */
     .hero { display: block; min-height: 100svh; min-height: 100dvh; padding: 0; isolation: isolate; }
-    .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('assets/robot-studio-extended.png') right bottom / cover no-repeat; filter: brightness(.94) sepia(.05); pointer-events: none; }
+    .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('assets/robot-studio-extended.jpg') right bottom / cover no-repeat; filter: brightness(.94) sepia(.05); pointer-events: none; }
     .hero-visual { display: block; }
     .hero-photo { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; object-position: left top; inset: auto; mask-image: linear-gradient(to bottom, #000 93%, transparent 100%); }
     .product { width: auto; max-width: 560px; margin: 0 auto; padding: 32px max(20px, env(safe-area-inset-right)) 48px max(20px, env(safe-area-inset-left)); }
@@ -332,11 +338,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .brand-mark { width: 14px; height: 14px; }
     .signup-note { margin-bottom: 24px; }
     .specs, .signup { max-width: none; }
-    .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-top: 24px; }
-    .specs li { width: auto; }
-    .specs li + li { border-left: 0; padding-left: 0; }
     .footer { position: relative; left: auto; right: auto; bottom: auto; padding: 0 max(26px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(26px, env(safe-area-inset-left)); font-size: 9px; }
     .footer-note { max-width: 130px; }
+    /* Lead with the headline and signup; the robot follows below. */
+    .hero { display: flex; flex-direction: column; }
+    .product { order: 1; width: 100%; padding-top: max(32px, env(safe-area-inset-top)); padding-bottom: 8px; }
+    .hero-visual { order: 2; }
+    .footer { order: 3; }
+    .hero-photo { mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 93%, transparent 100%); }
   }
   @media (prefers-reduced-motion: reduce) {
     button { transition: none; }
@@ -356,9 +365,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <main class="hero">
   <picture class="hero-visual">
-  <img class="hero-photo" src="assets/robot-studio.png" alt="A white Telekinetic robot with two polished metal arms and a mobile base, casting a shadow across the gray studio floor" fetchpriority="high" width="1536" height="1024">
+  <img class="hero-photo" src="assets/robot-studio.jpg" alt="A white Telekinetic robot with two polished metal arms and a mobile base, casting a shadow across the gray studio floor" fetchpriority="high" width="1536" height="1024">
   </picture>
-  <img class="studio-extension" src="assets/robot-studio.png" alt="" aria-hidden="true">
+  <img class="studio-extension" src="assets/robot-studio.jpg" alt="" aria-hidden="true">
   <section class="product" aria-labelledby="headline">
     <div class="product-name"><button class="brand-logo" type="button" aria-label="Animate Telekinetic logo"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false">
 
@@ -383,16 +392,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="sr-only">make you espresso, wipe down the counter, clean your bathroom, or make you an omelette</span>
       <span class="headline-ending">in minutes.</span>
     </h1>
-    <p class="signup-note">Sign ups open now</p>
+    <p class="signup-note">Sign up for early access and updates</p>
     <div id="tk-signup" class="signup">
-      <form id="tk-form" novalidate aria-label="Get notified about Telekinetic">
-        <input id="tk-email" type="email" name="email" autocomplete="email" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
-        <button id="tk-submit" type="submit">Notify me</button>
+      <form id="tk-form" novalidate aria-label="Get early access to Telekinetic">
+        <input id="tk-email" type="email" name="email" autocomplete="email" inputmode="email" enterkeyhint="go" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter your email" aria-label="Email address" aria-describedby="tk-error" required>
+        <button id="tk-submit" type="submit">Get Access</button>
       </form>
       <p id="tk-error" class="form-message" role="alert"></p>
     </div>
+    <div id="tk-share" class="share" hidden>
+      <div class="share-row">
+        <p>Know someone who’d want one? Share it!</p>
+        <button id="tk-copy" class="share-button" type="button">Copy URL</button>
+      </div>
+      <div class="share-row">
+        <p>Follow us on X</p>
+        <a id="tk-follow" class="share-button" href="https://x.com/telekinetic_bot" target="_blank" rel="noopener" aria-label="Telekinetic on X"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      </div>
+    </div>
     <div class="purchase"><span class="price">$2,999</span><span aria-hidden="true">·</span><span class="availability">December 2026</span></div>
-    <ul class="specs" aria-label="Robot specifications"><li>Two arms</li><li>Mobile base</li><li>5 kg payload</li><li>650 mm reach</li></ul>
+    <ul class="specs" aria-label="Robot specifications"><li>5 kg payload</li><li>650 mm reach</li></ul>
   </section>
   <footer class="footer">
     <p>Designed & manufactured<br>in San Francisco.</p>
@@ -482,6 +501,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   });
   logoMotion.addEventListener('change', () => { stopLogo(); if (logoHovered || logoFocused) playLogo(); else scheduleLogoIdle(); });
 
+  // Post-signup sharing. The copied link carries r=share so visits it brings are attributed.
+  const SHARE_URL = 'https://telekinetic.bot/?r=share';
+  const copyButton = document.getElementById('tk-copy');
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(SHARE_URL);
+    } catch (_) {
+      const field = document.createElement('textarea');
+      field.value = SHARE_URL;
+      field.setAttribute('readonly', '');
+      field.style.cssText = 'position:fixed; opacity:0;';
+      document.body.append(field);
+      field.select();
+      document.execCommand('copy');
+      field.remove();
+    }
+    copyButton.textContent = 'Copied!';
+    setTimeout(() => { copyButton.textContent = 'Copy URL'; }, 2000);
+    window.tkTrack?.('ui_click', { element_id: 'copy_url' });
+  });
+  const followLink = document.getElementById('tk-follow');
+  followLink.addEventListener('click', () => window.tkTrack?.('ui_click', { element_id: 'follow_x' }));
+
   // Email signup wired to Loops
   const LOOPS_FORM_ID = "cmqjtqvul09p20j1ea906orra";
 
@@ -493,6 +535,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   const trackSignup = (name, details = {}) => {
     try { window.tkTrack?.(name, { form_id: 'notify_me', ...details }); } catch (_) {}
+  };
+  // Where this visitor came from, saved on the Loops contact as its source.
+  const signupSource = () => {
+    try {
+      const params = new URL(location.href).searchParams;
+      let ref = params.get('r');
+      try { ref = ref || localStorage.getItem('telekinetic.ref_id'); } catch (_) {}
+      if (ref) return `Website (ref: ${ref})`.slice(0, 100);
+      const utm = [params.get('utm_source'), params.get('utm_campaign')].filter(Boolean).join(' / ');
+      if (utm) return `Website (utm: ${utm})`.slice(0, 100);
+      const referrer = document.referrer && new URL(document.referrer).hostname;
+      if (referrer && referrer !== location.hostname) return `Website (referrer: ${referrer})`.slice(0, 100);
+    } catch (_) {}
+    return 'Website (direct)';
+  };
+  const showSignupDone = (message) => {
+    const success = document.createElement("p");
+    success.className = "signup-done";
+    success.textContent = message;
+    success.setAttribute("role", "status");
+    signup.replaceWith(success);
+    const share = document.getElementById("tk-share");
+    if (share) share.hidden = false;
+  };
+  // Loops answers repeat signups exactly like new ones, so remember signups made in this
+  // browser. Only a SHA-256 hash of the address is stored, never the address itself.
+  const SIGNED_UP_KEY = 'telekinetic.signed_up';
+  const emailKey = async (email) => {
+    try {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email.toLowerCase()));
+      return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    } catch (_) { return null; }
+  };
+  const rememberedSignups = () => {
+    try { return JSON.parse(localStorage.getItem(SIGNED_UP_KEY)) || []; } catch (_) { return []; }
+  };
+  const rememberSignup = (key) => {
+    try { if (key) localStorage.setItem(SIGNED_UP_KEY, JSON.stringify([...rememberedSignups(), key].slice(-5))); } catch (_) {}
   };
   let signupStarted = false;
   let signupAttempts = 0;
@@ -517,6 +597,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     errorEl.textContent = "";
     submitBtn.disabled = true;
     submitBtn.textContent = "…";
+    const signupKey = await emailKey(email);
+    if (signupKey && rememberedSignups().includes(signupKey)) {
+      // A repeat signup is not a new lead, but the visitor is on the list.
+      trackSignup('signup_error', { error_type: 'already_subscribed' });
+      showSignupDone("You’re already on the list.");
+      return;
+    }
     const signupRequestStart = performance.now();
     let signupStatus = 0;
     let signupFailure = 'network';
@@ -524,19 +611,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const res = await fetch("https://app.loops.so/api/newsletter-form/" + LOOPS_FORM_ID, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ email }).toString(),
+        body: new URLSearchParams({ email, source: signupSource() }).toString(),
       });
       signupStatus = res.status;
+      // Loops limits signups per IP address; shared networks hit this first.
+      if (res.status === 429) {
+        signupFailure = 'rate_limited';
+        throw new Error("rate limited");
+      }
       signupFailure = 'invalid_response';
       const data = await res.json();
       signupFailure = 'server_rejected';
       if (res.ok && data && data.success === true) {
         trackSignup('generate_lead', { response_time_ms: Math.round(performance.now() - signupRequestStart) });
-        const success = document.createElement("p");
-        success.style.cssText = "font-family:'JetBrains Mono',monospace; font-size:13px; margin:0;";
-        success.textContent = "You're on the list. Watch your inbox.";
-        success.setAttribute("role", "status");
-        signup.replaceWith(success);
+        rememberSignup(signupKey);
+        showSignupDone("You're on the list. Watch your inbox.");
       } else {
         throw new Error("err");
       }
@@ -546,8 +635,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         response_time_ms: Math.round(performance.now() - signupRequestStart)
       });
       submitBtn.disabled = false;
-      submitBtn.textContent = "Notify me";
-      errorEl.textContent = "Couldn't sign you up. Please try again.";
+      submitBtn.textContent = "Get Access";
+      errorEl.textContent = signupFailure === 'rate_limited'
+        ? "Too many signups from this network, try again in a minute"
+        : "Couldn't sign you up. Please try again.";
     }
   });
 
