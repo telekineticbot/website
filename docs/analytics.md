@@ -15,7 +15,7 @@ confirmed conversion; use `generate_lead` for that.
 | outreach_click | Landing with nonempty `r` query | ref_id |
 | signup_start | First nonempty input on this page | form_id |
 | signup_attempt | Submit action, including invalid input | form_id, attempt_number |
-| signup_error | Invalid email, rejected response, malformed JSON, or network failure | form_id, error_type, http_status, response_time_ms |
+| signup_error | Invalid email, rate limit (`rate_limited`), repeat signup from the same browser (`already_subscribed`; Loops itself returns success for repeats, so only same-browser repeats are detected), rejected response, malformed JSON, or network failure | form_id, error_type, http_status, response_time_ms |
 | generate_lead | Loops returns HTTP success and JSON `success: true` | form_id, response_time_ms |
 | element_view | At least half of signup/price/specifications becomes visible, once per page | element_id |
 | ui_click | Logo activation | element_id |
@@ -27,6 +27,14 @@ confirmed conversion; use `generate_lead` for that.
 Short pages with no scrollable content do not emit scroll_depth. Performance timings
 are navigation timings, not Core Web Vitals. A lead means the form endpoint accepted
 the request, not that an email address has completed double opt-in or is a new contact.
+
+## Signup source in Loops
+
+Each signup sends Loops a `source` contact property describing how the visitor arrived:
+`Website (ref: <id>)` for outreach referral links (including `r=share` from the post-signup
+Copy URL button), `Website (utm: <source> / <campaign>)` for UTM-tagged links,
+`Website (referrer: <host>)` for other sites, otherwise `Website (direct)`. Loops sets
+`source` only when it creates a contact, so repeat signups keep their original source.
 
 ## Reporting
 
