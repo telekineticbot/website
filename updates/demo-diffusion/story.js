@@ -13,11 +13,17 @@ import {
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-// Limitations scene layout, on the same table.
-const GOAL_BOWL = v(0.06, 0, 0.2);
-const SMALL_BOWL_START = v(-0.36, 0, 0.1);
-const ORANGE_SPOT = v(-0.14, 0.034, 0.36);
+// Limitations layout, on the same table. The small bowl and the orange sit on the table from the start,
+// out of the way of the main story. For the limitations, the big bowl comes back out of the sink to where it started.
+const GOAL_BOWL = BOWL_START.clone();
+const SMALL_BOWL_START = v(0.06, 0, 0.27);
+const ORANGE_SPOT = v(-0.11, 0.034, 0.38);
 const SMALL_BOWL_NESTED_HEIGHT = 0.018;
+// Where the orange rests inside the big bowl, for the beat that shows what we asked for.
+const ORANGE_IN_BOWL = v(GOAL_BOWL.x, 0.045, GOAL_BOWL.z);
+// Next time, the small bowl and the orange start somewhere slightly different.
+const SMALL_BOWL_MOVED = v(0.12, 0, 0.16);
+const ORANGE_MOVED = v(-0.02, 0.034, 0.43);
 
 // The post's page scrubs the story with scroll. The Updates list plays the main
 // story on a timed loop as the post's preview.
@@ -109,7 +115,7 @@ function start(stageElement, mode) {
   // A see-through orange in the bowl marks where the orange should end up.
   const goalMaterial = new THREE.MeshBasicMaterial({ color: COLORS.accent, transparent: true, opacity: 0.4, depthWrite: false });
   const goalOrange = new THREE.Mesh(new THREE.SphereGeometry(0.036, 32, 24), goalMaterial);
-  goalOrange.position.set(GOAL_BOWL.x, 0.05, GOAL_BOWL.z);
+  goalOrange.position.copy(ORANGE_IN_BOWL);
   goalOrange.visible = false;
   scene.add(goalOrange);
 
@@ -148,8 +154,19 @@ function start(stageElement, mode) {
     v(GOAL_BOWL.x, 0.085, GOAL_BOWL.z),
     v(GOAL_BOWL.x, 0.3, GOAL_BOWL.z),
   ], { grasp: 2, release: 6 });
+  // The robot's version of the wrong demo: the same motion, bent to reach the small bowl where it sits now.
+  const smallBowlShift = SMALL_BOWL_MOVED.clone().sub(SMALL_BOWL_START);
+  const wrongRobotPath = makePath(wrongDemoPath.points.map((point, index) => {
+    if (index >= 1 && index <= 3) return point.clone().add(smallBowlShift);
+    if (index === 4) return point.clone().addScaledVector(smallBowlShift, 0.5);
+    return point.clone();
+  }), { grasp: 2, release: 6 });
   const wrongDemoTube = makeTube(scene, wrongDemoPath.curve, COLORS.accent, 0.0075);
-  const wrongRobotTube = makeTube(scene, wrongDemoPath.curve, COLORS.ink, 0.006);
+  const wrongRobotTube = makeTube(scene, wrongRobotPath.curve, COLORS.ink, 0.006);
+  // An object hops in an arc, with no hand: the orange showing where we want it, or a bowl going back to its spot.
+  function hopBetween(from, to, amount) {
+    return from.clone().lerp(to, amount).add(v(0, 0.16 * Math.sin(Math.PI * amount), 0));
+  }
   // Noise dots: the demo with noise added. Each dot sits at a point along a path plus a random offset.
   const DOT_COUNT = 72;
   const dotGeometry = new THREE.SphereGeometry(0.009, 10, 8);
@@ -181,8 +198,8 @@ function start(stageElement, mode) {
   const sideShot = [v(0.05, 1.35, 1.8), v(0, 0.2, 0)];
   const missEnd = demoPath.graspAt + 0.06;
   const limitsShot = [v(-0.02, 1.3, 1.75), v(-0.05, 0.15, 0.1)];
-  const limitsWideShot = [v(0.35, 1.75, 2.3), v(-0.05, 0.12, 0.1)];
-  const limitsCloseShot = [v(-0.1, 0.95, 1.25), v(-0.06, 0.08, 0.22)];
+  const limitsCloseShot = [v(-0.22, 0.95, 1.25), v(-0.24, 0.08, 0.16)];
+  const finalMainShot = [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)];
 
   const steps = [
     // 0. The task: the robot puts the bowl in the sink on its own
@@ -207,11 +224,14 @@ function start(stageElement, mode) {
       };
     },
     // 2. Next time, the bowl starts somewhere slightly different: it slides to its new spot
+    // First the bowl hops back out of the sink to where it started, so nothing jumps.
     (progress) => ({
       gripperTip: HOME,
-      bowlPosition: BOWL_START.clone().lerp(BOWL_ROBOT_START, ease(clamp01((progress - 0.15) / 0.55))),
+      bowlPosition: progress < 0.3
+        ? hopBetween(v(SINK_CENTER.x, BOWL_IN_SINK_HEIGHT, SINK_CENTER.z), BOWL_START, ease(clamp01(progress / 0.28)))
+        : BOWL_START.clone().lerp(BOWL_ROBOT_START, ease(clamp01((progress - 0.35) / 0.4))),
       snapBowl: true,
-      showOldSpot: progress > 0.15,
+      showOldSpot: progress > 0.35,
       tubes: [[demoTube, 1]],
       camera: sideShot,
     }),
@@ -259,66 +279,121 @@ function start(stageElement, mode) {
         bowlPosition: bowlAlong(robotPath, motion, pathPoint, SINK_CENTER, BOWL_IN_SINK_HEIGHT, BOWL_ROBOT_START),
         gripperOpen: gripOpenAlong(robotPath, motion),
         tubes: [[demoTube, 1, 0.4], [robotTube, 1]],
-        camera: [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)],
+        camera: finalMainShot,
       };
     },
-    // Limitations 1. The camera settles on a new scene: a big bowl, a small bowl and an orange.
+    // Limitations 1. The same table: the big bowl lifts back out of the sink to where it started,
+    // and the camera turns to the big bowl, the small bowl and the orange.
+    (progress) => {
+      const returning = ease(clamp01((progress - 0.05) / 0.7));
+      const turning = ease(progress);
+      const bowlInSink = v(SINK_CENTER.x, BOWL_IN_SINK_HEIGHT, SINK_CENTER.z);
+      return {
+        gripperTip: HOME,
+        bowlPosition: bowlInSink.lerp(GOAL_BOWL, returning).add(v(0, 0.22 * Math.sin(Math.PI * returning), 0)),
+        snapBowl: true,
+        limits: { smallBowlPosition: SMALL_BOWL_START, orangePosition: ORANGE_SPOT, goal: 0 },
+        camera: [finalMainShot[0].clone().lerp(limitsShot[0], turning), finalMainShot[1].clone().lerp(limitsShot[1], turning)],
+      };
+    },
+    // Limitations 2. What we ask for: the orange goes into the bowl.
     (progress) => ({
-      scene: 'limits',
       gripperTip: HOME,
       bowlPosition: GOAL_BOWL,
       snapBowl: true,
-      limits: { smallBowlPosition: SMALL_BOWL_START, goal: 0 },
-      camera: [limitsWideShot[0].clone().lerp(limitsShot[0], ease(progress)), limitsWideShot[1].clone().lerp(limitsShot[1], ease(progress))],
-    }),
-    // Limitations 2. What we ask for: the orange in the bowl. The goal fades in as a see-through orange.
-    (progress) => ({
-      scene: 'limits',
-      gripperTip: HOME,
-      bowlPosition: GOAL_BOWL,
-      snapBowl: true,
-      limits: { smallBowlPosition: SMALL_BOWL_START, goal: ease(clamp01(progress / 0.8)) },
+      limits: { smallBowlPosition: SMALL_BOWL_START, orangePosition: hopBetween(ORANGE_SPOT, ORANGE_IN_BOWL, ease(clamp01((progress - 0.1) / 0.75))), goal: 0 },
       camera: limitsShot,
     }),
-    // Limitations 3. The demo shows a different task: nesting the small bowl in the big one.
+    // Limitations 3. The orange hops back out, leaving a see-through marker of what we asked for.
+    // Then the demo shows a different task: a person nests the small bowl in the big one.
     (progress) => {
-      const motion = ease(clamp01((progress - 0.05) / 0.8));
+      const hopBack = ease(clamp01(progress / 0.2));
+      const motion = ease(clamp01((progress - 0.25) / 0.7));
       const toolTip = wrongDemoPath.curve.getPoint(motion);
       return {
-        scene: 'limits',
-        gripperTip: HOME,
+          gripperTip: HOME,
         hideRobot: true,
         person: { toolTip, toolOpen: gripOpenAlong(wrongDemoPath, motion) },
         bowlPosition: GOAL_BOWL,
         snapBowl: true,
-        limits: { smallBowlPosition: bowlAlong(wrongDemoPath, motion, toolTip, GOAL_BOWL, SMALL_BOWL_NESTED_HEIGHT, SMALL_BOWL_START), goal: 0.6 },
+        limits: {
+          smallBowlPosition: bowlAlong(wrongDemoPath, motion, toolTip, GOAL_BOWL, SMALL_BOWL_NESTED_HEIGHT, SMALL_BOWL_START),
+          orangePosition: hopBetween(ORANGE_IN_BOWL, ORANGE_SPOT, hopBack),
+          goal: 0.6 * hopBack,
+        },
         tubes: [[wrongDemoTube, motion]],
         camera: limitsShot,
       };
     },
-    // Limitations 4. The robot follows the demo anyway: it nests the bowl and leaves the orange.
+    // Limitations 3b (no text). Next time, the small bowl and the orange start somewhere slightly different.
+    // First the small bowl hops back out of the big bowl to where it started, so nothing jumps.
+    (progress) => {
+      const hopBack = ease(clamp01(progress / 0.28));
+      const sliding = ease(clamp01((progress - 0.35) / 0.4));
+      const smallBowlNested = GOAL_BOWL.clone().setY(SMALL_BOWL_NESTED_HEIGHT);
+      return {
+          gripperTip: HOME,
+        bowlPosition: GOAL_BOWL,
+        snapBowl: true,
+        oldSpotPosition: SMALL_BOWL_START,
+        showOldSpot: progress > 0.35,
+        limits: {
+          smallBowlPosition: progress < 0.3 ? hopBetween(smallBowlNested, SMALL_BOWL_START, hopBack) : SMALL_BOWL_START.clone().lerp(SMALL_BOWL_MOVED, sliding),
+          orangePosition: ORANGE_SPOT.clone().lerp(ORANGE_MOVED, sliding),
+          goal: 0.6,
+        },
+        tubes: [[wrongDemoTube, 1]],
+        camera: limitsShot,
+      };
+    },
+    // Limitations 3c (no text). Noise is added to the demo.
+    (progress) => ({
+      gripperTip: HOME,
+      bowlPosition: GOAL_BOWL,
+      snapBowl: true,
+      limits: { smallBowlPosition: SMALL_BOWL_MOVED, orangePosition: ORANGE_MOVED, goal: 0.6 },
+      tubes: [[wrongDemoTube, 1, 1 - 0.65 * ease(progress)]],
+      dots: { fromPath: wrongDemoPath, toPath: wrongDemoPath, spread: NOISE_SPREAD * ease(clamp01(progress / 0.8)), cleanup: 0 },
+      camera: limitsShot,
+    }),
+    // Limitations 3d (no text). The robot cleans it up into a motion bent to the small bowl's new spot.
+    (progress) => {
+      const cleanup = ease(clamp01((progress - 0.05) / 0.7));
+      return {
+          gripperTip: HOME,
+        bowlPosition: GOAL_BOWL,
+        snapBowl: true,
+        limits: { smallBowlPosition: SMALL_BOWL_MOVED, orangePosition: ORANGE_MOVED, goal: 0.6 },
+        tubes: [[wrongDemoTube, 1, 0.35], [wrongRobotTube, cleanup > 0.6 ? ease((cleanup - 0.6) / 0.4) : 0]],
+        dots: cleanup < 1 ? { fromPath: wrongDemoPath, toPath: wrongRobotPath, spread: NOISE_SPREAD, cleanup, fade: 1 - ease(clamp01((cleanup - 0.7) / 0.3)) } : null,
+        camera: limitsShot,
+      };
+    },
+    // Limitations 4. The robot follows the demo: it nests the small bowl and leaves the orange where it is.
     (progress) => {
       const motion = ease(clamp01((progress - 0.05) / 0.65));
       const goingHome = ease(clamp01((progress - 0.72) / 0.2));
-      const pathPoint = wrongDemoPath.curve.getPoint(motion);
+      const pathPoint = wrongRobotPath.curve.getPoint(motion);
       return {
-        scene: 'limits',
-        gripperTip: pathPoint.clone().lerp(HOME, goingHome),
-        gripperOpen: gripOpenAlong(wrongDemoPath, motion),
+          gripperTip: pathPoint.clone().lerp(HOME, goingHome),
+        gripperOpen: gripOpenAlong(wrongRobotPath, motion),
         bowlPosition: GOAL_BOWL,
         snapBowl: true,
-        limits: { smallBowlPosition: bowlAlong(wrongDemoPath, motion, pathPoint, GOAL_BOWL, SMALL_BOWL_NESTED_HEIGHT, SMALL_BOWL_START), goal: 0.6 + 0.4 * goingHome },
-        tubes: [[wrongDemoTube, 1, 0.4], [wrongRobotTube, motion]],
+        limits: {
+          smallBowlPosition: bowlAlong(wrongRobotPath, motion, pathPoint, GOAL_BOWL, SMALL_BOWL_NESTED_HEIGHT, SMALL_BOWL_MOVED),
+          orangePosition: ORANGE_MOVED,
+          goal: 0.6 + 0.4 * goingHome,
+        },
+        tubes: [[wrongDemoTube, 1, 0.35], [wrongRobotTube, 1]],
         camera: limitsShot,
       };
     },
     // Limitations 5. The result: the bowls are stacked and the orange is still out. The camera moves in on it.
     (progress) => ({
-      scene: 'limits',
       gripperTip: HOME,
       bowlPosition: GOAL_BOWL,
       snapBowl: true,
-      limits: { smallBowlPosition: GOAL_BOWL.clone().setY(SMALL_BOWL_NESTED_HEIGHT), goal: 1 },
+      limits: { smallBowlPosition: GOAL_BOWL.clone().setY(SMALL_BOWL_NESTED_HEIGHT), orangePosition: ORANGE_MOVED, goal: 1 },
       tubes: [[wrongDemoTube, 1, 0.25], [wrongRobotTube, 1, 0.5]],
       camera: [limitsShot[0].clone().lerp(limitsCloseShot[0], ease(progress)), limitsShot[1].clone().lerp(limitsCloseShot[1], ease(progress))],
     }),
@@ -436,6 +511,9 @@ function start(stageElement, mode) {
     arm.handGroup.visible = !state.hideRobot;
     bowl.position.copy(shown.bowlPosition);
     oldSpot.visible = Boolean(state.showOldSpot);
+    const oldSpotCenter = state.oldSpotPosition ?? BOWL_START;
+    oldSpot.position.set(oldSpotCenter.x, 0.003, oldSpotCenter.z);
+    oldSpot.scale.setScalar(state.oldSpotPosition ? 0.72 : 1);
     // Dots start at the demo plus noise and, as cleanup goes to 1, settle onto the target path.
     dots.visible = Boolean(state.dots);
     if (state.dots) {
@@ -450,12 +528,16 @@ function start(stageElement, mode) {
       }
       dots.instanceMatrix.needsUpdate = true;
     }
-    smallBowl.visible = orange.visible = goalOrange.visible = Boolean(state.limits);
-    if (state.limits) {
-      smallBowl.position.copy(state.limits.smallBowlPosition);
+    // The small bowl and the orange are always on the table; the main story just leaves them be.
+    const limits = state.limits ?? { smallBowlPosition: SMALL_BOWL_START, orangePosition: ORANGE_SPOT, goal: 0 };
+    smallBowl.visible = orange.visible = true;
+    goalOrange.visible = limits.goal > 0;
+    {
+      smallBowl.position.copy(limits.smallBowlPosition);
+      orange.position.copy(limits.orangePosition ?? ORANGE_SPOT);
       // The goal marker breathes gently so it reads as a target, not an object.
       const breathing = prefersReducedMotion.matches ? 0.5 : 0.5 + 0.5 * Math.sin(performance.now() / 420);
-      goalMaterial.opacity = (0.22 + 0.28 * breathing) * state.limits.goal;
+      goalMaterial.opacity = (0.22 + 0.28 * breathing) * limits.goal;
     }
     person.group.visible = Boolean(state.person);
     if (state.person) posePerson(person, state.person.toolTip, state.person.toolOpen);

@@ -23,7 +23,8 @@ body { margin: 0; color: var(--ink); font: 600 17px/1.6 var(--display); -webkit-
 a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
-.site-header { position: relative; z-index: 3; }
+/* The header stays at the top the whole way down, above the 3D stage and everything that slides over it. */
+.site-header { position: sticky; top: 0; z-index: 30; background: #b9bbb5d9; background: color-mix(in srgb, var(--studio) 85%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .site-header-inner { max-width: 1120px; margin: 0 auto; padding: 22px max(20px, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .brand { display: inline-flex; align-items: center; gap: 8px; font: 600 18px/1.2 var(--display); letter-spacing: .02em; text-decoration: none; }
 .brand svg { width: 18px; height: 18px; display: block; }
@@ -56,6 +57,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .step { min-height: 140vh; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
 /* A step before a run of cards gets room to finish, and its text leaves as the first card comes in. */
 .step:has(+ .card-flow) { min-height: 210vh; }
+/* Steps with no text, where only the animation moves. */
+.step-silent { min-height: 110vh; }
 /* Once the story script runs, it places the text over the scene and fades it in and out with the scroll. */
 .paced .step .card { position: fixed; top: 22vh; left: max(20px, calc((100vw - 1120px) / 2 + 20px)); opacity: 0; visibility: hidden; transition: none; will-change: opacity, transform; }
 /* Results: two cards slide up over the stage, which blurs and darkens behind them. */
@@ -105,14 +108,12 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .section > p { margin-bottom: 0; }
 .section > * + * { margin-top: 28px; }
 .section > h2 + * { margin-top: 12px; }
-.sbs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.sbs { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 72px); }
 .sbs figure { margin: 0; min-width: 0; }
 /* Videos: vignette, soft edges that fade into the page, and film grain like the homepage photo. */
 .video-label { position: absolute; top: 17%; left: 10%; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0; width: max-content; max-width: 80%;
   font: 700 clamp(14px, 1.7vw, 19px)/1.2 var(--display); letter-spacing: -.01em; color: #fff; background: #14140fbf; padding: 7px 13px; border-radius: 999px; }
-.video-label::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #ffffffb3; flex: none; }
 .video-label.with-demo { color: var(--accent); }
-.video-label.with-demo::before { background: var(--accent); }
 .film-wrap { position: relative; }
 .film-glow { position: absolute; inset: -9%; background: center / 100% 100% no-repeat; filter: blur(40px) brightness(1.1); opacity: .4; pointer-events: none; }
 .film { position: relative; isolation: isolate;
