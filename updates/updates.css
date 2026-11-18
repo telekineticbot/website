@@ -97,7 +97,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .video-label.with-demo { color: var(--accent); }
 .video-label.with-demo::before { background: var(--accent); }
 .film-wrap { position: relative; }
-.film-glow { position: absolute; inset: 6%; background: center / cover no-repeat; filter: blur(60px) brightness(1.4); opacity: .2; pointer-events: none; }
+.film-glow { position: absolute; inset: -12%; background: center / 100% 100% no-repeat; filter: blur(50px) brightness(1.15); opacity: .6; pointer-events: none; }
 .film { position: relative; isolation: isolate;
   -webkit-mask: url("film-mask-a.png") center / 100% 100% no-repeat;
   mask: url("film-mask-a.png") center / 100% 100% no-repeat; }
