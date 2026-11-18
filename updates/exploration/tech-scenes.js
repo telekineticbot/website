@@ -65,24 +65,38 @@ function makeRing(scene, color, opacity) {
   return ring;
 }
 
-// ---------- 1. Every demo comes at the bowl the same way ----------
+// ---------- 1. The bowl moves, but every demo comes at it the same way ----------
+// Seven bowl spots across the counter. Each demo uses the same strategy relative to the bowl:
+// in from the back right, straight down over its center, close, lift.
+const DEMO_BOWLS = [
+  v(-0.08, 0, 0.2), v(-0.34, 0, 0.02), v(0.1, 0, 0.32), v(-0.3, 0, 0.3),
+  v(0.08, 0, 0.04), v(-0.14, 0, -0.04), v(-0.12, 0, 0.42),
+];
 function demosScene({ scene, bowl }) {
-  const bowlAt = EXPLORE_BOWL;
   const random = seededRandom(5);
   const jitter = (size) => (random() * 2 - 1) * size;
-  const DEMO_COUNT = 7;
   const DEMO_SECONDS = 2.1;
   const HOLD_SECONDS = 1.6;
-  const demos = [];
-  for (let index = 0; index < DEMO_COUNT; index += 1) {
-    // Every demo: in from the back right, down onto the bowl, lift it, set it back down, back to rest.
-    const approach = v(bowlAt.x + 0.17 + jitter(0.035), 0.36 + jitter(0.03), bowlAt.z - 0.16 + jitter(0.035));
-    const above = v(bowlAt.x + jitter(0.012), 0.27 + jitter(0.02), bowlAt.z + jitter(0.012));
+  const demos = DEMO_BOWLS.map((bowlAt) => {
+    const approach = v(bowlAt.x + 0.17 + jitter(0.015), 0.36 + jitter(0.015), bowlAt.z - 0.16 + jitter(0.015));
+    const above = v(bowlAt.x, 0.27, bowlAt.z);
     const grasp = v(bowlAt.x, GRASP_HEIGHT, bowlAt.z);
     const path = makePath([HOME, approach, above, grasp, v(bowlAt.x, 0.3, bowlAt.z), grasp, v(bowlAt.x, 0.26, bowlAt.z), HOME], { grasp: 3, release: 5 });
-    const trail = makeTube(scene, makePath([HOME, approach, above, grasp], {}).curve, COLORS.ink, 0.0032, 0.45);
-    demos.push({ path, trail });
-  }
+    // The trail keeps only the last part of the reach, the part that is the strategy: the same hook
+    // in from the back right and down onto the bowl, wherever the bowl is.
+    const trail = makeTube(scene, makePath([approach, above, grasp], {}).curve, COLORS.ink, 0.0032, 0.5);
+    // A faint outline marks where the bowl stood in each earlier demo.
+    const outline = new THREE.Mesh(
+      new THREE.RingGeometry(0.082, 0.088, 64),
+      new THREE.MeshBasicMaterial({ color: COLORS.ink, transparent: true, opacity: 0.3, depthWrite: false }),
+    );
+    outline.rotation.x = -Math.PI / 2;
+    outline.position.set(bowlAt.x, 0.002, bowlAt.z);
+    outline.visible = false;
+    scene.add(outline);
+    return { bowlAt, path, trail, outline };
+  });
+  const DEMO_COUNT = demos.length;
   const loop = DEMO_COUNT * DEMO_SECONDS + HOLD_SECONDS;
   return {
     loop,
@@ -92,17 +106,21 @@ function demosScene({ scene, bowl }) {
       const index = Math.min(DEMO_COUNT - 1, Math.floor(time / DEMO_SECONDS));
       const running = time < DEMO_COUNT * DEMO_SECONDS;
       const progress = running ? (time - index * DEMO_SECONDS) / DEMO_SECONDS : 1;
-      const { path } = demos[index];
+      const { path, bowlAt } = demos[index];
       const motion = ease(clamp01(progress));
       const tip = path.curve.getPoint(motion);
       const holding = motion > path.graspAt && motion < path.releaseAt;
       let open = 1;
       if (motion > path.graspAt - 0.03 && motion < path.releaseAt + 0.03) open = GRIP_ON_BOWL;
-      bowl.position.copy(holding ? tip.clone().add(v(0, -GRASP_HEIGHT, 0)) : bowlAt);
+      // Between demos the bowl slides to its next spot while the arm is still near rest.
+      const previous = demos[(index + DEMO_COUNT - 1) % DEMO_COUNT].bowlAt;
+      const resting = previous.clone().lerp(bowlAt, ease(clamp01(progress / 0.14)));
+      bowl.position.copy(holding ? tip.clone().add(v(0, -GRASP_HEIGHT, 0)) : resting);
       demos.forEach((demo, demoIndex) => {
         if (demoIndex < index) setTubeDrawn(demo.trail, 1);
-        else if (demoIndex === index) setTubeDrawn(demo.trail, clamp01(motion / path.graspAt));
+        else if (demoIndex === index) setTubeDrawn(demo.trail, clamp01((motion - path.graspAt / 3) / (path.graspAt * 2 / 3)));
         else setTubeDrawn(demo.trail, 0);
+        demo.outline.visible = demoIndex < index || (!running && demoIndex === index);
       });
       return { tip, open, fade: 1 - between(time, loop - 0.35, 0.35) };
     },
