@@ -389,15 +389,19 @@ function start(stageElement, mode) {
     });
   }
 
-  // Keep every step's text on one line: if a line is wider than the screen allows, shrink its type to fit.
+  // Keep each step's text on one line on wide screens, and at most two lines on phones:
+  // if a line would need more room than that, shrink its type until it fits.
   function fitStepText() {
-    const availableWidth = Math.min(1080, window.innerWidth - 40);
+    const narrow = window.innerWidth < 760;
+    const availableWidth = Math.min(1080, window.innerWidth - 40) * (narrow ? 1.9 : 1);
     stepCards.forEach((card) => {
       const phrase = card && card.querySelector('.phrase');
       if (!phrase) return;
       phrase.style.fontSize = '';
+      phrase.style.whiteSpace = 'nowrap';
       const baseSize = parseFloat(getComputedStyle(phrase).fontSize);
       const lineWidth = phrase.scrollWidth;
+      phrase.style.whiteSpace = '';
       if (lineWidth > availableWidth) phrase.style.fontSize = `${Math.floor(baseSize * availableWidth / lineWidth)}px`;
     });
   }

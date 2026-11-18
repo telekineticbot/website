@@ -55,7 +55,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 /* Each step is a stretch of scroll. Its animation plays first; then its text fades in near the top left and holds. */
 .step { min-height: 140vh; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
 /* A step before a run of cards gets room to finish, and its text leaves as the first card comes in. */
-.step:has(+ .card-flow) { min-height: 150vh; }
+.step:has(+ .card-flow) { min-height: 210vh; }
 /* Once the story script runs, it places the text over the scene and fades it in and out with the scroll. */
 .paced .step .card { position: fixed; top: 22vh; left: max(20px, calc((100vw - 1120px) / 2 + 20px)); opacity: 0; visibility: hidden; transition: none; will-change: opacity, transform; }
 /* Results: two cards slide up over the stage, which blurs and darkens behind them. */
@@ -69,7 +69,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .result-card > p { margin: -8px 0 0; max-width: 60ch; }
 .result-card .chart { background: none; border: 0; border-radius: 0; padding: 0; }
 /* Step text sits straight on the scene, with no box behind it. */
-/* One line per step. The story script shrinks a line's type only if it would not fit the screen. */
+/* One line per step on wide screens; the story script shrinks a line's type only if it would not fit. Phones may wrap to two lines. */
 .card { pointer-events: auto; color: var(--ink); white-space: nowrap; }
 .card .phrase { font: 700 30px/1.12 var(--display); letter-spacing: -.025em; }
 .card p { margin: 0; font-size: 20px; line-height: 1.35; letter-spacing: -.01em; }
@@ -185,7 +185,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 @media (max-width: 760px) {
   /* The 3D stage sits in the top part of the screen; the cards scroll through the bottom. */
   .paced .step .card { top: auto; bottom: 7vh; left: 20px; right: 20px; }
-  .card .phrase { font-size: 24px; }
+  .card { white-space: normal; }
+  .card .phrase { font-size: 22px; text-wrap: balance; }
   .card .stat { font-size: 36px; }
     .post-list a { grid-template-columns: minmax(0, 42%) 1fr; gap: 14px; padding: 16px 0; }
   .site-footer-inner { flex-direction: column; gap: 8px; }
