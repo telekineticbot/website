@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Direct GA4: Telekinetic web stream, initialized by /assets/analytics.js. -->
+<script src="/assets/analytics.js"></script>
+<script src="/assets/behavior.js"></script>
+<!-- Google Tag Manager, only on the live site so previews don't count as visits -->
+<script>if (/(^|\.)telekinetic\.bot$/.test(location.hostname)) {
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W44566MH');
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W2WT46WW');
+}</script>
+<!-- End Google Tag Manager -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teaching Robots Instantly · Telekinetic</title>
+<meta name="description" content="We showed a frozen pi0.5 one example of a task, with no training. On some tasks it went from never succeeding to succeeding most of the time.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Teaching Robots Instantly">
+<meta property="og:description" content="We showed a frozen pi0.5 one example of a task, with no training. On some tasks it went from never succeeding to succeeding most of the time.">
+<meta property="og:image" content="https://telekinetic.bot/updates/demo-diffusion/media/demo-path-overlay.jpg">
+<link rel="stylesheet" href="../updates.css">
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W44566MH"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W2WT46WW"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../../"><svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><circle cx="128" cy="128" r="112" fill="#fff"/><path fill="#ff7122" d="M125 28C163 28 197 40 216 73C232 98 236 117 230 141C226 169 213 199 186 216C161 231 126 236 96 226C66 218 44 202 33 176C22 150 24 120 31 94C37 66 50 43 78 35C95 30 111 29 125 28Z"/><path fill="#14140f" d="M100 69C111 61 121 65 124 75C128 85 118 93 108 102C87 120 83 136 89 154C97 177 124 185 149 181C174 177 192 161 193 143C195 124 185 104 174 92C164 81 153 75 145 73C140 71 140 69 145 70C166 75 181 88 192 106C205 126 211 144 204 162C195 186 175 199 146 203C120 207 94 203 77 191C58 178 53 155 56 133C58 107 74 87 100 69Z"/><rect x="105" y="118" width="46" height="28" rx="8" fill="none" stroke="#14140f" stroke-width="4.5"/><circle cx="119" cy="132" r="4" fill="#14140f"/><circle cx="137" cy="132" r="4" fill="#14140f"/></svg><span>Telekinetic</span></a>
+    <nav class="site-nav" aria-label="Site"><a href="../" aria-current="page">Updates</a></nav>
+  </div>
+</header>
+
+<article>
+  <section class="intro">
+    <h1>Teaching Robots <em>Instantly</em></h1>
+    <p class="dek">Testing the limits of DemoDiffusion.</p>
+    <p class="byline"><span>Vrishabh Kenkre</span><span><time datetime="2026-11-17">November 17, 2026</time></span></p>
+    <a class="scroll-caret" href="#story" aria-label="Scroll down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  </section>
+
+  <section class="story" id="story" aria-label="How it works, step by step">
+    <div class="stage">
+      <canvas aria-hidden="true"></canvas>
+      <div class="stage-dim" aria-hidden="true"></div>
+      <p class="stage-fallback">This animation needs WebGL. The steps below tell the same story.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="card"><p class="phrase">Task: robot puts bowl in sink.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">A person shows it once.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Next time, the bowl moves.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Copying the demo exactly would miss the bowl.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">We add noise to the demo.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The robot cleans it up to fit.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The bowl goes in the sink.</p></div></div>
+
+      <section class="card-flow" aria-label="Results">
+        <div class="card-slot"><div class="result-card">
+
+        <div class="sbs" data-synced-videos>
+          <figure>
+            <div class="film-wrap">
+              <p class="video-label">pi0.5 on its own</p>
+              <div class="film-glow" style="background-image:url(media/base-alone.jpg)" aria-hidden="true"></div>
+              <div class="film"><video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+            </div>
+          </figure>
+          <figure>
+            <div class="film-wrap">
+              <p class="video-label with-demo">pi0.5 with one demo</p>
+              <div class="film-glow" style="background-image:url(media/base-with-demo.jpg)" aria-hidden="true"></div>
+              <div class="film film-alt"><video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+            </div>
+          </figure>
+        </div>
+        </div></div>
+        <div class="card-slot"><div class="result-card">
+    <div class="chart" role="img" aria-label="Task success rate. Bowl into sink: 0 of 16 on its own, 10 of 16 with one demo. Orange into bowl: 0 of 49, 8 of 49. Apple onto plate: 0 of 16, 3 of 16. Stack a block: 0 of 16, 3 of 16.">
+          <div class="chart-head">
+            <h3>Task success rate</h3>
+            <p class="chart-legend"><span><i class="base"></i>On its own</span><span><i class="demo"></i>With one demo</span></p>
+          </div>
+          <div class="chart-plot">
+            <div class="chart-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+            <div class="chart-area">
+              <div class="chart-group" style="--delay:0.00s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
+                  <div class="chart-col demo" style="--value:62.5%"><span>10/16</span></div>
+                </div>
+                <p class="chart-task">Bowl into sink</p>
+              </div>
+              <div class="chart-group" style="--delay:0.15s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/49</span></div>
+                  <div class="chart-col demo" style="--value:16.3%"><span>8/49</span></div>
+                </div>
+                <p class="chart-task">Orange into bowl</p>
+              </div>
+              <div class="chart-group" style="--delay:0.30s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
+                  <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
+                </div>
+                <p class="chart-task">Apple onto plate</p>
+              </div>
+              <div class="chart-group" style="--delay:0.45s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
+                  <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
+                </div>
+                <p class="chart-task">Stack a block</p>
+              </div>
+            </div>
+          </div>
+          <p class="fine">Varied object position.</p>
+        </div>
+        </div></div>
+      </section>
+
+      <div class="step"><div class="card"><p class="phrase">Robots follow whatever the demo does.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">For example, we want the orange in the bowl.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">But the demo shows stacking bowls.</p></div></div>
+      <div class="step step-silent" aria-hidden="true"></div>
+      <div class="step step-silent" aria-hidden="true"></div>
+      <div class="step step-silent" aria-hidden="true"></div>
+      <div class="step"><div class="card"><p class="phrase">Robot ignores what we asked.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Therefore: bad demos = weird stuff.</p></div></div>
+
+      <section class="card-flow" aria-label="Limitations">
+        <div class="card-slot"><div class="result-card">
+          <div class="film-wrap">
+            <p class="video-label">pi0.5 with the wrong demo</p>
+            <div class="film-glow" style="background-image:url(media/wrong-demo.jpg)" aria-hidden="true"></div>
+            <div class="film"><video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+          </div>
+        </div></div>
+      </section>
+    </div>
+  </section>
+
+
+
+  <section class="section" aria-labelledby="citations">
+    <h2 id="citations">Citations</h2>
+    <ol class="refs">
+      <li>Park, Bharadhwaj, Tulsiani. <a href="https://arxiv.org/abs/2506.20668">DemoDiffusion: One-Shot Human Imitation using pre-trained Diffusion Policy</a>. arXiv 2025.</li>
+      <li>Physical Intelligence et al. <a href="https://arxiv.org/abs/2504.16054">&pi;<sub>0.5</sub>: a Vision-Language-Action Model with Open-World Generalization</a>. arXiv 2025.</li>
+    </ol>
+  </section>
+</article>
+
+<script>
+  // Without module support or WebGL, show the text-only version of the story.
+  (function () {
+    var canvas = document.createElement('canvas');
+    var hasWebGL = !!(window.WebGLRenderingContext && (canvas.getContext('webgl2') || canvas.getContext('webgl')));
+    if (!hasWebGL) document.documentElement.classList.add('no-webgl');
+  })();
+</script>
+<script>
+  // Keep the two result videos in step: they have no controls, so they start together and drift is corrected.
+  (function () {
+    var group = document.querySelector('[data-synced-videos]');
+    if (!group) return;
+    var videos = Array.prototype.slice.call(group.querySelectorAll('video'));
+    var mirroring = false;
+    function other(video) { return videos[0] === video ? videos[1] : videos[0]; }
+    function mirror(action) {
+      return function (event) {
+        if (mirroring) return;
+        mirroring = true;
+        action(event.target, other(event.target));
+        setTimeout(function () { mirroring = false; }, 0);
+      };
+    }
+    videos.forEach(function (video) {
+      video.muted = true;
+      video.addEventListener('play', mirror(function (source, target) {
+        if (Math.abs(target.currentTime - source.currentTime) > 0.1) target.currentTime = source.currentTime;
+        if (target.paused) target.play().catch(function () {});
+      }));
+      video.addEventListener('pause', mirror(function (source, target) { target.pause(); }));
+      video.addEventListener('seeked', mirror(function (source, target) {
+        // Only follow a real jump, so the two videos don't keep seeking each other.
+        if (Math.abs(target.currentTime - source.currentTime) > 0.1) target.currentTime = source.currentTime;
+      }));
+    });
+    // Correct small drift while both play.
+    videos[0].addEventListener('timeupdate', function () {
+      if (mirroring || videos[0].paused || videos[1].paused) return;
+      if (Math.abs(videos[0].currentTime - videos[1].currentTime) > 0.15) videos[1].currentTime = videos[0].currentTime;
+    });
+  })();
+</script>
+<script>
+  // The result columns are scrubbed by scrolling: once the chart card has settled in the middle of the
+  // screen, they grow with further scrolling, and shrink back if you scroll up.
+  // Each task starts a little after the one before it, and the counts tick up with the bars.
+  (function () {
+    var chart = document.querySelector('.chart');
+    if (!chart) return;
+    var slot = chart.closest('.card-slot') || chart;
+    var heldCard = chart.closest('.result-card') || chart;
+    var columns = Array.prototype.slice.call(chart.querySelectorAll('.chart-col')).map(function (column, index) {
+      var label = column.querySelector('span');
+      var parts = label.textContent.split('/');
+      return {
+        column: column,
+        label: label,
+        targetPercent: parseFloat(column.style.getPropertyValue('--value')) || 0,
+        successes: Number(parts[0]),
+        total: parts[1],
+        order: Math.floor(index / 2) + (column.classList.contains('demo') ? 0.5 : 0),
+      };
+    });
+    var lastOrder = columns.length / 2 - 0.5;
+    function draw(column, fraction) {
+      column.column.style.height = (column.targetPercent * fraction) + '%';
+      column.label.textContent = Math.round(column.successes * fraction) + '/' + column.total;
+    }
+    var scheduled = false;
+    function update() {
+      scheduled = false;
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      var box = slot.getBoundingClientRect();
+      // The bars stay at zero while the card slides in. Once it has settled in the middle of the screen,
+      // the next 0.9 screens of scrolling grow them from zero to full.
+      var settledTop = parseFloat(heldCard.style.top) || viewportHeight * 0.12;
+      var scrolled = (settledTop - box.top) / (viewportHeight * 0.9);
+      columns.forEach(function (column) {
+        var start = (column.order / lastOrder) * 0.45;
+        var linear = Math.min(1, Math.max(0, (scrolled - start) / 0.55));
+        draw(column, 1 - Math.pow(1 - linear, 3));
+      });
+    }
+    function schedule() { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } }
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  })();
+</script>
+<script type="module" src="story.js"></script>
+</body>
+</html>
