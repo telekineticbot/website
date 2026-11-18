@@ -121,18 +121,23 @@ function start() {
     return point.clone();
   }), { grasp: 2, release: 6 });
 
-  // The demo with noise added: the same route, shaken up. The robot cleans this up into its own motion.
-  const noisyPoints = [];
-  for (let index = 0; index <= 36; index++) {
-    const point = demoPath.curve.getPoint(index / 36);
-    if (index > 0 && index < 36) point.add(v(jitter(index, 1), jitter(index, 2) * 0.6, jitter(index, 3)).multiplyScalar(0.07));
-    noisyPoints.push(point);
-  }
-  const noisyPath = makePath(noisyPoints, {});
-
   const demoTube = makeTube(scene, demoPath.curve, COLORS.accent, 0.0075);
   const robotTube = makeTube(scene, robotPath.curve, COLORS.ink, 0.006);
-  const noisyTube = makeTube(scene, noisyPath.curve, COLORS.noise, 0.005);
+  // Noise dots: the demo with noise added. Each dot sits at a point along a path plus a random offset.
+  const DOT_COUNT = 72;
+  const dotGeometry = new THREE.SphereGeometry(0.009, 10, 8);
+  const dotMaterial = new THREE.MeshStandardMaterial({ color: COLORS.accent, roughness: 0.5, transparent: true, opacity: 0.9 });
+  const dots = new THREE.InstancedMesh(dotGeometry, dotMaterial, DOT_COUNT);
+  dots.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  dots.visible = false;
+  scene.add(dots);
+  const dotOffsets = [];
+  const randomGenerator = seededRandom(7);
+  for (let index = 0; index < DOT_COUNT; index += 1) {
+    dotOffsets.push(v(randomGenerator() * 2 - 1, randomGenerator() * 2 - 1, randomGenerator() * 2 - 1).normalize().multiplyScalar(0.35 + randomGenerator() * 0.65));
+  }
+  const dotMatrix = new THREE.Matrix4();
+  const NOISE_SPREAD = 0.08;
 
   // Smoothed values so jumps between steps become short motions.
   const shown = {
@@ -198,17 +203,22 @@ function start() {
       gripperTip: HOME,
       bowlPosition: BOWL_ROBOT_START,
       snapBowl: true,
-      tubes: [[demoTube, 1, 1 - 0.6 * ease(progress)], [noisyTube, ease(clamp01(progress / 0.85))]],
+      tubes: [[demoTube, 1, 1 - 0.65 * ease(progress)]],
+      dots: { fromPath: demoPath, toPath: demoPath, spread: NOISE_SPREAD * ease(clamp01(progress / 0.8)), cleanup: 0 },
       camera: sideShot,
     }),
     // 5. The robot cleans it up into a smooth motion that bends to the bowl's new spot
-    (progress) => ({
-      gripperTip: HOME,
-      bowlPosition: BOWL_ROBOT_START,
-      snapBowl: true,
-      tubes: [[demoTube, 1, 0.4], [noisyTube, 1, 1 - ease(progress)], [robotTube, ease(clamp01(progress / 0.85))]],
-      camera: sideShot,
-    }),
+    (progress) => {
+      const cleanup = ease(clamp01((progress - 0.05) / 0.7));
+      return {
+        gripperTip: HOME,
+        bowlPosition: BOWL_ROBOT_START,
+        snapBowl: true,
+        tubes: [[demoTube, 1, 0.35], [robotTube, cleanup > 0.6 ? ease((cleanup - 0.6) / 0.4) : 0]],
+        dots: cleanup < 1 ? { fromPath: demoPath, toPath: robotPath, spread: NOISE_SPREAD, cleanup, fade: 1 - ease(clamp01((cleanup - 0.7) / 0.3)) } : null,
+        camera: sideShot,
+      };
+    },
     // 6. The bowl goes in the sink, and the arm goes back to rest
     (progress) => {
       const motion = ease(clamp01((progress - 0.05) / 0.65));
@@ -225,7 +235,7 @@ function start() {
   ];
 
 
-  const allTubes = [demoTube, robotTube, noisyTube];
+  const allTubes = [demoTube, robotTube];
 
   function currentStoryPosition() {
     const viewportMiddle = window.innerHeight * 0.55;
@@ -266,6 +276,20 @@ function start() {
     arm.handGroup.visible = !state.hideRobot;
     bowl.position.copy(shown.bowlPosition);
     oldSpot.visible = Boolean(state.showOldSpot);
+    // Dots start at the demo plus noise and, as cleanup goes to 1, settle onto the target path.
+    dots.visible = Boolean(state.dots);
+    if (state.dots) {
+      dotMaterial.opacity = 0.9 * (state.dots.fade ?? 1);
+      for (let index = 0; index < DOT_COUNT; index += 1) {
+        const along = index / (DOT_COUNT - 1);
+        const noisy = state.dots.fromPath.curve.getPoint(along).addScaledVector(dotOffsets[index], state.dots.spread);
+        const position = noisy.lerp(state.dots.toPath.curve.getPoint(along), state.dots.cleanup);
+        position.y = Math.max(position.y, 0.015);
+        dotMatrix.makeTranslation(position.x, position.y, position.z);
+        dots.setMatrixAt(index, dotMatrix);
+      }
+      dots.instanceMatrix.needsUpdate = true;
+    }
     person.group.visible = Boolean(state.person);
     if (state.person) posePerson(person, state.person.toolTip, state.person.toolOpen);
 
@@ -584,10 +608,13 @@ function gripOpenAlong(path, motion) {
 
 // ---------- Small helpers ----------
 
-// Repeatable pseudo random offset in -1..1, so the noisy line looks the same on every visit.
-function jitter(index, channel) {
-  const value = Math.sin(index * 12.9898 + channel * 78.233) * 43758.5453;
-  return (value - Math.floor(value)) * 2 - 1;
+// Repeatable random numbers, so the noise looks the same on every visit.
+function seededRandom(seed) {
+  let state = seed;
+  return () => {
+    state = (state * 16807) % 2147483647;
+    return (state - 1) / 2147483646;
+  };
 }
 
 function v(x, y, z) { return new THREE.Vector3(x, y, z); }
