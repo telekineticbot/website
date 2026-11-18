@@ -98,28 +98,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="chart-plot">
         <div class="chart-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
         <div class="chart-area">
-          <div class="chart-group">
+          <div class="chart-group" style="--delay:0.00s">
             <div class="chart-cols">
               <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
               <div class="chart-col demo" style="--value:62.5%"><span>10/16</span></div>
             </div>
             <p class="chart-task">Bowl into sink</p>
           </div>
-          <div class="chart-group">
+          <div class="chart-group" style="--delay:0.15s">
             <div class="chart-cols">
               <div class="chart-col base" style="--value:0%"><span>0/49</span></div>
               <div class="chart-col demo" style="--value:16.3%"><span>8/49</span></div>
             </div>
             <p class="chart-task">Orange into bowl</p>
           </div>
-          <div class="chart-group">
+          <div class="chart-group" style="--delay:0.30s">
             <div class="chart-cols">
               <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
               <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
             </div>
             <p class="chart-task">Apple onto plate</p>
           </div>
-          <div class="chart-group">
+          <div class="chart-group" style="--delay:0.45s">
             <div class="chart-cols">
               <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
               <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
@@ -135,21 +135,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="section" aria-labelledby="limits-title">
     <h2 id="limits-title">Limitations</h2>
     <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
-  </section>
-
-  <section class="section" aria-labelledby="next-title">
-    <h2 id="next-title">Future extensions</h2>
-    <p>Directions we plan to try next. No results yet.</p>
-    <div class="stack">
-      <div>
-        <h3>Exploration</h3>
-        <p>Let the robot try variations of the demo on its own, so it finds what works beyond one example.</p>
-      </div>
-      <div>
-        <h3>Reinforcement learning</h3>
-        <p>Use those tries to train the skill into the model, so it no longer needs a demo.</p>
-      </div>
-    </div>
+    <figure class="clip">
+      <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline controls preload="auto"></video>
+      <figcaption>Asked to put the orange in the bowl, but shown a demo of a different task, it follows the demo.</figcaption>
+    </figure>
   </section>
 
   <section class="section" aria-labelledby="citations">
@@ -209,6 +198,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (mirroring || videos[0].paused || videos[1].paused) return;
       if (Math.abs(videos[0].currentTime - videos[1].currentTime) > 0.15) videos[1].currentTime = videos[0].currentTime;
     });
+  })();
+</script>
+<script>
+  // Grow the result columns from zero when the chart scrolls into view, once, with the counts ticking up.
+  (function () {
+    var chart = document.querySelector('.chart');
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!chart || reduceMotion || !('IntersectionObserver' in window)) return;
+    var labels = Array.prototype.slice.call(chart.querySelectorAll('.chart-col span'));
+    var finalCounts = labels.map(function (label) {
+      var parts = label.textContent.split('/');
+      label.textContent = '0/' + parts[1];
+      return { label: label, successes: Number(parts[0]), total: parts[1] };
+    });
+    chart.classList.add('animate');
+    var observer = new IntersectionObserver(function (entries) {
+      if (!entries[0].isIntersecting) return;
+      observer.disconnect();
+      chart.classList.add('is-visible');
+      finalCounts.forEach(function (count) {
+        var delaySeconds = parseFloat(getComputedStyle(count.label.closest('.chart-group')).getPropertyValue('--delay')) || 0;
+        var startTime = performance.now() + delaySeconds * 1000;
+        var durationMs = 900;
+        function tick(now) {
+          var fraction = Math.min(1, Math.max(0, (now - startTime) / durationMs));
+          count.label.textContent = Math.round(count.successes * fraction) + '/' + count.total;
+          if (fraction < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    }, { threshold: 0.4 });
+    observer.observe(chart);
   })();
 </script>
 <script type="module" src="story.js"></script>
