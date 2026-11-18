@@ -557,6 +557,11 @@ function start(stageElement, mode) {
   let framingDistanceScale = 1;
   const SCENE_HALF_WIDTH_TAN = 0.4;
   function resize() {
+    if (mode === 'scroll') {
+      // The stage starts below the sticky header; tell the page how tall the header is.
+      const header = document.querySelector('.site-header');
+      if (header) document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
+    }
     const width = stageElement.clientWidth;
     const height = stageElement.clientHeight;
     renderer.setSize(width, height, false);
@@ -566,7 +571,8 @@ function start(stageElement, mode) {
     const narrow = mode === 'scroll' && width < 760;
     camera.fov = narrow ? 46 : 32;
     const horizontalHalfTan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
-    framingDistanceScale = Math.max(1, SCENE_HALF_WIDTH_TAN / horizontalHalfTan);
+    // A little extra room all round, so the scene sits comfortably below the sticky header.
+    framingDistanceScale = 1.08 * Math.max(1, SCENE_HALF_WIDTH_TAN / horizontalHalfTan);
     if (mode === 'loop') camera.clearViewOffset();
     else if (narrow) camera.setViewOffset(width, height, 0, height * 0.17, width, height);
     else camera.setViewOffset(width, height, -width * (camera.aspect >= 1.2 ? 0.14 : 0.06), 0, width, height);

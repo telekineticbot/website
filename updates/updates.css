@@ -48,11 +48,12 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 
 /* Scroll story: a sticky 3D stage with step cards scrolling over it */
 .story { position: relative; }
-.stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+/* The stage fills the screen below the sticky header, so nothing in the scene hides behind it. */
+.stage { position: sticky; top: var(--header-height, 72px); height: calc(100vh - var(--header-height, 72px)); height: calc(100svh - var(--header-height, 72px)); overflow: hidden; }
 .stage canvas { display: block; width: 100%; height: 100%; }
 .stage-fallback { position: absolute; inset: 0; display: none; place-items: center; padding: 24px; text-align: center; font: 400 13px/1.6 var(--mono); color: var(--ink-soft); }
 .no-webgl .stage-fallback { display: grid; }
-.steps { position: relative; margin-top: -100vh; margin-top: -100svh; z-index: 2; pointer-events: none; }
+.steps { position: relative; margin-top: calc(var(--header-height, 72px) - 100vh); margin-top: calc(var(--header-height, 72px) - 100svh); z-index: 2; pointer-events: none; }
 /* Each step is a stretch of scroll. Its animation plays first; then its text fades in near the top left and holds. */
 .step { min-height: 140vh; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
 /* A step before a run of cards gets room to finish, and its text leaves as the first card comes in. */
