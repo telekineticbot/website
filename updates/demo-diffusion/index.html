@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Direct GA4: Telekinetic web stream, initialized by /assets/analytics.js. -->
+<script src="/assets/analytics.js"></script>
+<script src="/assets/behavior.js"></script>
+<!-- Google Tag Manager, only on the live site so previews don't count as visits -->
+<script>if (/(^|\.)telekinetic\.bot$/.test(location.hostname)) {
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W44566MH');
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W2WT46WW');
+}</script>
+<!-- End Google Tag Manager -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One demo, no retraining · Telekinetic</title>
+<meta name="description" content="We showed a frozen pi0.5 one example of a task, with no training. On some tasks it went from never succeeding to succeeding most of the time.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="One demo, no retraining">
+<meta property="og:description" content="We showed a frozen pi0.5 one example of a task, with no training. On some tasks it went from never succeeding to succeeding most of the time.">
+<meta property="og:image" content="https://telekinetic.bot/updates/demo-diffusion/media/demo-path-overlay.jpg">
+<link rel="stylesheet" href="../updates.css">
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W44566MH"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W2WT46WW"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../../"><svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><circle cx="128" cy="128" r="112" fill="#fff"/><path fill="#ff7122" d="M125 28C163 28 197 40 216 73C232 98 236 117 230 141C226 169 213 199 186 216C161 231 126 236 96 226C66 218 44 202 33 176C22 150 24 120 31 94C37 66 50 43 78 35C95 30 111 29 125 28Z"/><path fill="#14140f" d="M100 69C111 61 121 65 124 75C128 85 118 93 108 102C87 120 83 136 89 154C97 177 124 185 149 181C174 177 192 161 193 143C195 124 185 104 174 92C164 81 153 75 145 73C140 71 140 69 145 70C166 75 181 88 192 106C205 126 211 144 204 162C195 186 175 199 146 203C120 207 94 203 77 191C58 178 53 155 56 133C58 107 74 87 100 69Z"/><rect x="105" y="118" width="46" height="28" rx="8" fill="none" stroke="#14140f" stroke-width="4.5"/><circle cx="119" cy="132" r="4" fill="#14140f"/><circle cx="137" cy="132" r="4" fill="#14140f"/></svg><span>Telekinetic</span></a>
+    <nav class="site-nav" aria-label="Site"><a href="../" aria-current="page">Updates</a></nav>
+  </div>
+</header>
+
+<article>
+  <section class="intro">
+    <p class="kicker">Research update</p>
+    <h1>One demo. <em>No retraining.</em></h1>
+    <p class="dek">We showed a frozen robot model one example of a task. On some tasks, it went from never succeeding to succeeding most of the time.</p>
+    <p class="byline"><span>Research by Vrishabh Kenkre</span><span><time datetime="2026-11-17">November 17, 2026</time></span><span>All results in simulation</span></p>
+    <p class="scroll-hint">Scroll to see how it works</p>
+  </section>
+
+  <section class="story" aria-label="How it works, step by step">
+    <div class="stage">
+      <canvas aria-hidden="true"></canvas>
+      <p class="stage-fallback">This animation needs WebGL. The steps below tell the same story.</p>
+      <div class="stage-legend" aria-hidden="true">
+        <span><i style="background:#ff7122"></i>Expert demo</span>
+        <span><i style="background:#14140f"></i>Robot's motion</span>
+        <span><i style="background:#6f6f68"></i>Noise</span>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="card">
+        <p class="num">01</p>
+        <p>This arm is controlled by pi0.5, an open robot model. It looks at the scene and decides how to move.</p>
+        <p>Its task: put the bowl in the sink.</p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">02</p>
+        <p>On its own, it has never learned this task. It wanders and never picks the bowl up.</p>
+        <p class="stat">0 of 16 <small>tries succeed</small></p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">03</p>
+        <p>So we show it one example: an expert doing the task once.</p>
+        <p class="note">One demo. That's all it gets.</p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">04</p>
+        <p>Here's how pi0.5 normally decides how to move. It starts from random noise and cleans it up, step by step, into a motion.</p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">05</p>
+        <p>Our change: instead of pure noise, it starts from the expert's motion with some noise added.</p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">06</p>
+        <p>It cleans that up into a motion of its own, and does the task.</p>
+        <p>The model itself never changes. No retraining.</p>
+        <p class="stat good">10 of 16 <small>tries succeed</small></p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">07</p>
+        <p>Same idea, four tasks. All four started at zero.</p>
+        <div class="bars">
+          <div class="bars-legend"><span><i style="background:#14140f8c"></i>On its own</span><span><i style="background:#ff7122"></i>With one demo</span></div>
+          <div>
+            <p class="bar-task"><span>Bowl into sink</span><span>0 → 10 of 16</span></p>
+            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:62.5%"></div></div></div>
+          </div>
+          <div>
+            <p class="bar-task"><span>Orange into bowl</span><span>0 → 8 of 49</span></p>
+            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:16.3%"></div></div></div>
+          </div>
+          <div>
+            <p class="bar-task"><span>Apple onto plate</span><span>0 → 3 of 16</span></p>
+            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:18.75%"></div></div></div>
+          </div>
+          <div>
+            <p class="bar-task"><span>Stack a block</span><span>0 → 3 of 16</span></p>
+            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:18.75%"></div></div></div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:12px">Best setting for each task. Random object positions every try.</p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">08</p>
+        <p>The catch: it follows the demo, not the goal. Show it a demo of a different task, and it does that task instead.</p>
+        <p class="stat">0 of 8 <small>tries succeed</small></p>
+        <p class="note">Tested on orange into bowl, with a demo from another task.</p>
+      </div></div>
+
+      <div class="step"><div class="card">
+        <p class="num">09</p>
+        <p>What's next: making the skill stick. After training on 10 successful expert runs, pi0.5 put the bowl in the sink with no demo at all.</p>
+        <p class="stat good">30 of 32 <small>tries succeed</small></p>
+        <p class="note">Coming soon: Vrishabh's work on having the robot explore on its own.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="clips-title">
+    <h2 id="clips-title">In simulation</h2>
+    <p>Runs from the simulated kitchen. The labels on the videos come from our research notes.</p>
+    <div class="clips">
+      <figure class="wide">
+        <video src="media/demo-path-overlay.mp4" poster="media/demo-path-overlay.jpg" muted loop playsinline controls preload="none"></video>
+        <figcaption>The yellow line is the expert demo's path. The blue line is where the robot's hand goes. It follows the demo, adapted to where the bowl is.</figcaption>
+      </figure>
+      <figure>
+        <video src="media/alone-vs-demo.mp4" poster="media/alone-vs-demo.jpg" muted loop playsinline controls preload="none"></video>
+        <figcaption>Same scene, side by side. Left: pi0.5 on its own. Right: with one demo.</figcaption>
+      </figure>
+      <figure>
+        <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted loop playsinline controls preload="none"></video>
+        <figcaption>The wrong demo: asked to put the orange in the bowl, but shown a demo of a different task, it follows the demo.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="details-title">
+    <h2 id="details-title">The details</h2>
+    <div class="details">
+      <div>
+        <h3>Setup</h3>
+        <ul>
+          <li>Kitchen scenes in Isaac Lab Arena, with a Franka arm.</li>
+          <li>Object positions are random on every try.</li>
+          <li>In the demo runs, pi0.5's weights never change.</li>
+          <li>16 tries per setting. 49 for orange into bowl.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>How the demo is used</h3>
+        <ul>
+          <li>We fit the demo's path to where the objects are in this try.</li>
+          <li>pi0.5 starts from that path plus noise, instead of from pure noise.</li>
+          <li>A variant also nudges each cleanup step toward the demo. On bowl into sink: 9 of 16 without the nudge, 10 of 16 with it.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>What we take from it</h3>
+        <ul>
+          <li>One demo can unlock a task the model has never done.</li>
+          <li>It copies the demo, so the demo has to be the right one.</li>
+          <li>Training on 10 successful runs (about 40 minutes) made it stick: 30 of 32 with no demo.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</article>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <p>Designed &amp; manufactured in San Francisco.</p>
+    <p><a href="../">All updates</a></p>
+  </div>
+</footer>
+
+<script>
+  // Without module support or WebGL, show the text-only version of the story.
+  (function () {
+    var canvas = document.createElement('canvas');
+    var hasWebGL = !!(window.WebGLRenderingContext && (canvas.getContext('webgl2') || canvas.getContext('webgl')));
+    if (!hasWebGL) document.documentElement.classList.add('no-webgl');
+  })();
+</script>
+<script type="module" src="story.js"></script>
+</body>
+</html>
