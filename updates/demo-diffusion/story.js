@@ -41,7 +41,11 @@ const BOWL_START = new THREE.Vector3(-0.38, 0, 0.12);
 const SINK_CENTER = new THREE.Vector3(0.4, 0, 0.06);
 const PLATE_CENTER = new THREE.Vector3(-0.02, 0, 0.34);
 const HOME = new THREE.Vector3(0.02, 0.46, -0.12);
-const SINK_DEPTH = 0.09;
+const SINK_DEPTH = 0.1;
+const SINK_HALF_WIDTH = 0.15;
+const SINK_HALF_DEPTH = 0.13;
+// The bowl rests on the basin floor once it is in the sink.
+const BOWL_IN_SINK_HEIGHT = -SINK_DEPTH + 0.002;
 
 if (renderer) start();
 
@@ -170,7 +174,6 @@ function start() {
       gripperTip: HOME.clone().add(v(0, 0.02 * Math.sin(progress * Math.PI * 2), 0)),
       bowlPosition: BOWL_START,
       camera: [v(0.55 - progress * 0.4, 1.2, 1.85), v(0, 0.17, 0)],
-      highlight: { bowl: true, sink: true },
     }),
     // 1. pi0.5 alone: wanders and never picks the bowl up
     (progress) => ({
@@ -212,18 +215,17 @@ function start() {
       const pathPoint = ownPath.curve.getPoint(motion);
       return {
         gripperTip: pathPoint,
-        bowlPosition: bowlAlong(ownPath, motion, pathPoint, SINK_CENTER, -SINK_DEPTH * 0.6),
+        bowlPosition: bowlAlong(ownPath, motion, pathPoint, SINK_CENTER, BOWL_IN_SINK_HEIGHT),
         gripperOpen: gripOpenAlong(ownPath, motion),
         tubes: [[demoTube, 1, 0.35], [ownTube, cleanup]],
         dots: cleanup < 1 ? { path: ownPath, spread: 0.07, cleanup, color: COLORS.accent, fade: 1 - cleanup } : null,
         camera: [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)],
-        highlight: { sink: motion > 0.97 },
       };
     },
     // 6. Results: pull back, with the bowl resting in the sink
     (progress) => ({
       gripperTip: HOME.clone().add(v(0.04 * Math.sin(progress * Math.PI), 0, 0)),
-      bowlPosition: v(SINK_CENTER.x, -SINK_DEPTH * 0.6, SINK_CENTER.z),
+      bowlPosition: v(SINK_CENTER.x, BOWL_IN_SINK_HEIGHT, SINK_CENTER.z),
       tubes: [[ownTube, 1, 0.5]],
       camera: [v(-0.35, 1.5, 2.25), v(0.05, 0.15, 0)],
     }),
@@ -238,7 +240,6 @@ function start() {
         gripperOpen: gripOpenAlong(wrongPath, motion),
         tubes: [[wrongTube, draw]],
         camera: [v(0.1, 1.3, 1.85), v(0, 0.18, 0.06)],
-        highlight: { sink: true, sinkWrong: motion > 0.97 },
       };
     },
     // 8. Next: learn from 10 successful runs, then do the task with no demo
@@ -248,12 +249,11 @@ function start() {
       const pathPoint = ownPath.curve.getPoint(motion);
       return {
         gripperTip: pathPoint,
-        bowlPosition: bowlAlong(ownPath, motion, pathPoint, SINK_CENTER, -SINK_DEPTH * 0.6),
+        bowlPosition: bowlAlong(ownPath, motion, pathPoint, SINK_CENTER, BOWL_IN_SINK_HEIGHT),
         gripperOpen: gripOpenAlong(ownPath, motion),
         practice: progress < 0.45 ? stack : Math.max(0, 1 - (progress - 0.45) / 0.1),
         tubes: [[ownTube, motion]],
         camera: [v(0.2, 1.25, 1.75), v(0.02, 0.18, 0)],
-        highlight: { sink: motion > 0.97 },
       };
     },
   ];
@@ -320,8 +320,6 @@ function start() {
       dots.visible = false;
     }
 
-    const highlight = state.highlight ?? {};
-    sink.rimMaterial.color.setHex(highlight.sinkWrong ? COLORS.wrong : 0x3a3a34);
     plate.visible = true;
 
     camera.position.copy(shown.cameraPosition);
@@ -365,11 +363,28 @@ function start() {
 // ---------- Scene pieces ----------
 
 function buildTable(scene) {
-  const top = new THREE.Mesh(
-    new THREE.BoxGeometry(1.7, 0.05, 1.05),
-    new THREE.MeshStandardMaterial({ color: COLORS.table, roughness: 0.55 }),
-  );
-  top.position.set(0, -0.025, 0);
+  // Counter top with a cut-out for the sink, so the basin is open from above.
+  const halfWidth = 0.85, halfDepth = 0.525;
+  const outline = new THREE.Shape();
+  outline.moveTo(-halfWidth, -halfDepth);
+  outline.lineTo(halfWidth, -halfDepth);
+  outline.lineTo(halfWidth, halfDepth);
+  outline.lineTo(-halfWidth, halfDepth);
+  outline.closePath();
+  // Shape y runs opposite to world z once the shape is laid flat.
+  const hole = new THREE.Path();
+  const holeLeft = SINK_CENTER.x - SINK_HALF_WIDTH, holeRight = SINK_CENTER.x + SINK_HALF_WIDTH;
+  const holeNear = -(SINK_CENTER.z + SINK_HALF_DEPTH), holeFar = -(SINK_CENTER.z - SINK_HALF_DEPTH);
+  hole.moveTo(holeLeft, holeNear);
+  hole.lineTo(holeLeft, holeFar);
+  hole.lineTo(holeRight, holeFar);
+  hole.lineTo(holeRight, holeNear);
+  hole.closePath();
+  outline.holes.push(hole);
+  const topGeometry = new THREE.ExtrudeGeometry(outline, { depth: 0.05, bevelEnabled: false });
+  topGeometry.rotateX(-Math.PI / 2);
+  topGeometry.translate(0, -0.05, 0);
+  const top = new THREE.Mesh(topGeometry, new THREE.MeshStandardMaterial({ color: COLORS.table, roughness: 0.55 }));
   top.receiveShadow = true;
   top.castShadow = true;
   scene.add(top);
@@ -383,44 +398,57 @@ function buildTable(scene) {
 }
 
 function buildSink(scene) {
+  // A brushed steel basin set into the counter, with a thin rim, a drain and an arched tap.
   const group = new THREE.Group();
-  const rimMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a34, roughness: 0.35, metalness: 0.3 });
-  const basin = new THREE.Mesh(
-    new THREE.BoxGeometry(0.3, 0.012, 0.26),
-    new THREE.MeshStandardMaterial({ color: COLORS.sink, roughness: 0.4 }),
-  );
-  basin.position.y = -SINK_DEPTH;
-  group.add(basin);
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2c26, roughness: 0.4 });
-  for (const [width, depth, x, z] of [[0.3, 0.012, 0, -0.13], [0.3, 0.012, 0, 0.13], [0.012, 0.26, -0.15, 0], [0.012, 0.26, 0.15, 0]]) {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(width, SINK_DEPTH, depth), wallMaterial);
+  const steelMaterial = new THREE.MeshStandardMaterial({ color: 0xb4b7b1, roughness: 0.32, metalness: 0.75, side: THREE.DoubleSide });
+  const basinMaterial = new THREE.MeshStandardMaterial({ color: 0x9a9d97, roughness: 0.4, metalness: 0.7, side: THREE.DoubleSide });
+  const width = SINK_HALF_WIDTH * 2, depth = SINK_HALF_DEPTH * 2;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), basinMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -SINK_DEPTH;
+  floor.receiveShadow = true;
+  group.add(floor);
+  for (const [wallWidth, x, z, turn] of [
+    [width, 0, -SINK_HALF_DEPTH, 0], [width, 0, SINK_HALF_DEPTH, 0],
+    [depth, -SINK_HALF_WIDTH, 0, Math.PI / 2], [depth, SINK_HALF_WIDTH, 0, Math.PI / 2],
+  ]) {
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(wallWidth, SINK_DEPTH), basinMaterial);
     wall.position.set(x, -SINK_DEPTH / 2, z);
+    wall.rotation.y = turn;
+    wall.receiveShadow = true;
     group.add(wall);
   }
-  for (const [width, depth, x, z] of [[0.36, 0.03, 0, -0.145], [0.36, 0.03, 0, 0.145], [0.03, 0.32, -0.165, 0], [0.03, 0.32, 0.165, 0]]) {
-    const rim = new THREE.Mesh(new THREE.BoxGeometry(width, 0.008, depth), rimMaterial);
-    rim.position.set(x, 0.004, z);
+  const drain = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.003, 32), new THREE.MeshStandardMaterial({ color: 0x3c3d39, roughness: 0.5, metalness: 0.6 }));
+  drain.position.y = -SINK_DEPTH + 0.002;
+  group.add(drain);
+  const rimWidth = 0.022;
+  for (const [rimX, rimZ, x, z] of [
+    [width + rimWidth * 2, rimWidth, 0, -SINK_HALF_DEPTH - rimWidth / 2],
+    [width + rimWidth * 2, rimWidth, 0, SINK_HALF_DEPTH + rimWidth / 2],
+    [rimWidth, depth, -SINK_HALF_WIDTH - rimWidth / 2, 0],
+    [rimWidth, depth, SINK_HALF_WIDTH + rimWidth / 2, 0],
+  ]) {
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(rimX, 0.006, rimZ), steelMaterial);
+    rim.position.set(x, 0.003, z);
+    rim.receiveShadow = true;
     group.add(rim);
   }
-  // Faucet
-  const faucetMaterial = new THREE.MeshStandardMaterial({ color: 0x2b2b26, roughness: 0.3, metalness: 0.6 });
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 16), faucetMaterial);
-  post.position.set(0, 0.11, -0.19);
-  post.castShadow = true;
-  group.add(post);
-  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.12, 16), faucetMaterial);
-  spout.rotation.x = Math.PI / 2;
-  spout.position.set(0, 0.215, -0.135);
-  spout.castShadow = true;
-  group.add(spout);
+  // Tap on the right side of the basin, away from the arm's path, arching over the edge.
+  const tapMaterial = new THREE.MeshStandardMaterial({ color: 0xd9dbd6, roughness: 0.15, metalness: 0.95 });
+  const tapSide = SINK_HALF_WIDTH + 0.05;
+  const tapCurve = new THREE.CatmullRomCurve3([
+    v(tapSide, 0, 0), v(tapSide, 0.17, 0), v(tapSide - 0.03, 0.22, 0), v(tapSide - 0.065, 0.2, 0), v(tapSide - 0.07, 0.165, 0),
+  ]);
+  const tap = new THREE.Mesh(new THREE.TubeGeometry(tapCurve, 48, 0.011, 16, false), tapMaterial);
+  tap.castShadow = true;
+  group.add(tap);
+  const tapBase = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.02, 24), tapMaterial);
+  tapBase.position.set(tapSide, 0.01, 0);
+  tapBase.castShadow = true;
+  group.add(tapBase);
   group.position.copy(SINK_CENTER);
-  // Hide the table top above the basin with a dark inset.
-  const inset = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.052, 0.26), new THREE.MeshStandardMaterial({ color: 0x1b1b17, roughness: 0.5 }));
-  inset.position.set(0, -0.025, 0);
-  group.add(inset);
-  inset.visible = false;
   scene.add(group);
-  return { group, rimMaterial };
+  return { group };
 }
 
 function buildPlate(scene) {

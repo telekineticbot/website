@@ -46,14 +46,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <article>
   <section class="intro">
-    <p class="kicker">Research update</p>
     <h1>One demo. <em>No retraining.</em></h1>
-    <p class="dek">We showed a frozen robot model one example of a task. On some tasks, it went from never succeeding to succeeding most of the time.</p>
-    <p class="byline"><span>Research by Vrishabh Kenkre</span><span><time datetime="2026-11-17">November 17, 2026</time></span><span>All results in simulation</span></p>
-    <p class="scroll-hint">Scroll to see how it works</p>
+    <p class="dek">We showed a frozen robot model one example of a task, with no training.</p>
+    <p class="byline"><span>Research by Vrishabh Kenkre</span><span><time datetime="2026-11-17">November 17, 2026</time></span></p>
+    <a class="scroll-caret" href="#story" aria-label="Scroll down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   </section>
 
-  <section class="story" aria-label="How it works, step by step">
+  <section class="story" id="story" aria-label="How it works, step by step">
     <div class="stage">
       <canvas aria-hidden="true"></canvas>
       <p class="stage-fallback">This animation needs WebGL. The steps below tell the same story.</p>
@@ -65,79 +64,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <div class="steps">
-      <div class="step"><div class="card">
-        <p class="num">01</p>
-        <p>This arm is controlled by pi0.5, an open robot model. It looks at the scene and decides how to move.</p>
-        <p>Its task: put the bowl in the sink.</p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">02</p>
-        <p>On its own, it has never learned this task. It wanders and never picks the bowl up.</p>
-        <p class="stat">0 of 16 <small>tries succeed</small></p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">03</p>
-        <p>So we show it one example: an expert doing the task once.</p>
-        <p class="note">One demo. That's all it gets.</p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">04</p>
-        <p>Here's how pi0.5 normally decides how to move. It starts from random noise and cleans it up, step by step, into a motion.</p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">05</p>
-        <p>Our change: instead of pure noise, it starts from the expert's motion with some noise added.</p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">06</p>
-        <p>It cleans that up into a motion of its own, and does the task.</p>
-        <p>The model itself never changes. No retraining.</p>
-        <p class="stat good">10 of 16 <small>tries succeed</small></p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">07</p>
-        <p>Same idea, four tasks. All four started at zero.</p>
+      <div class="step"><div class="card"><p class="phrase">The task: bowl into the sink.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">On its own: 0 of 16.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">We show it one expert demo.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Normally it starts from random noise.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">We start it from the demo plus noise.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Now it works: 10 of 16.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Four tasks, all up from zero.</p>
         <div class="bars">
           <div class="bars-legend"><span><i style="background:#14140f8c"></i>On its own</span><span><i style="background:#ff7122"></i>With one demo</span></div>
           <div>
-            <p class="bar-task"><span>Bowl into sink</span><span>0 → 10 of 16</span></p>
+            <p class="bar-task"><span>Bowl into sink</span><span>10/16</span></p>
             <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:62.5%"></div></div></div>
           </div>
           <div>
-            <p class="bar-task"><span>Orange into bowl</span><span>0 → 8 of 49</span></p>
+            <p class="bar-task"><span>Orange into bowl</span><span>8/49</span></p>
             <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:16.3%"></div></div></div>
           </div>
           <div>
-            <p class="bar-task"><span>Apple onto plate</span><span>0 → 3 of 16</span></p>
+            <p class="bar-task"><span>Apple onto plate</span><span>3/16</span></p>
             <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:18.75%"></div></div></div>
           </div>
           <div>
-            <p class="bar-task"><span>Stack a block</span><span>0 → 3 of 16</span></p>
+            <p class="bar-task"><span>Stack a block</span><span>3/16</span></p>
             <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:18.75%"></div></div></div>
           </div>
         </div>
-        <p class="note" style="margin-top:12px">Best setting for each task. Random object positions every try.</p>
       </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">08</p>
-        <p>The catch: it follows the demo, not the goal. Show it a demo of a different task, and it does that task instead.</p>
-        <p class="stat">0 of 8 <small>tries succeed</small></p>
-        <p class="note">Tested on orange into bowl, with a demo from another task.</p>
-      </div></div>
-
-      <div class="step"><div class="card">
-        <p class="num">09</p>
-        <p>What's next: making the skill stick. After training on 10 successful expert runs, pi0.5 put the bowl in the sink with no demo at all.</p>
-        <p class="stat good">30 of 32 <small>tries succeed</small></p>
-        <p class="note">Coming soon: Vrishabh's work on having the robot explore on its own.</p>
-      </div></div>
+      <div class="step"><div class="card"><p class="phrase">Wrong demo? It copies it: 0 of 8.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Next: train on 10 runs. 30 of 32, no demo.</p></div></div>
     </div>
   </section>
 
@@ -186,6 +141,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li>One demo can unlock a task the model has never done.</li>
           <li>It copies the demo, so the demo has to be the right one.</li>
           <li>Training on 10 successful runs (about 40 minutes) made it stick: 30 of 32 with no demo.</li>
+          <li>The wrong demo test was on orange into bowl, with a demo from another task.</li>
+          <li>Next up: Vrishabh's work on having the robot explore on its own.</li>
         </ul>
       </div>
     </div>
