@@ -28,6 +28,22 @@ if (previewStage) start(previewStage, 'loop');
 
 function start(stageElement, mode) {
   const canvas = stageElement.querySelector('canvas');
+  const dimLayer = stageElement.querySelector('.stage-dim');
+  const resultsFlow = mode === 'scroll' ? document.querySelector('.results-flow') : null;
+  let shownDim = -1;
+  // While the result cards are on screen, blur and darken the animation so the results stand out.
+  function updateDim() {
+    if (!resultsFlow || !dimLayer) return;
+    const box = resultsFlow.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const comingIn = clamp01((viewportHeight - box.top) / (viewportHeight * 0.5));
+    const goingOut = clamp01((box.bottom - viewportHeight * 0.3) / (viewportHeight * 0.5));
+    const dim = Math.round(Math.min(comingIn, goingOut) * 100) / 100;
+    if (dim === shownDim) return;
+    shownDim = dim;
+    dimLayer.style.opacity = String(0.45 * dim);
+    canvas.style.filter = dim > 0 ? `blur(${(10 * dim).toFixed(1)}px)` : '';
+  }
   const stepElements = mode === 'scroll' ? [...document.querySelectorAll('.step')] : [];
   let renderer;
   try {
@@ -268,7 +284,7 @@ function start(stageElement, mode) {
   // A step plays while its card holds in place: near the top on wide screens,
   // near the bottom on phones, where the stage fills the top of the screen.
   function storyAnchor() {
-    return window.innerHeight * (window.innerWidth < 760 ? 0.82 : 0.3);
+    return window.innerHeight * (window.innerWidth < 760 ? 0.75 : 0.45);
   }
 
   function currentStoryPosition() {
@@ -405,6 +421,7 @@ function start(stageElement, mode) {
     } else {
       position = currentStoryPosition();
       markActiveStep(position.stepIndex);
+      updateDim();
     }
     const state = steps[Math.min(position.stepIndex, steps.length - 1)](position.progress);
     const damping = prefersReducedMotion.matches ? 1 : 1 - Math.exp(-elapsedSeconds * 9);

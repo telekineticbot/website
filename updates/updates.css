@@ -52,11 +52,18 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .stage-fallback { position: absolute; inset: 0; display: none; place-items: center; padding: 24px; text-align: center; font: 400 13px/1.6 var(--mono); color: var(--ink-soft); }
 .no-webgl .stage-fallback { display: grid; }
 .steps { position: relative; margin-top: -100vh; margin-top: -100svh; z-index: 2; pointer-events: none; }
-/* Each card rises to the top left, holds there while its part of the animation plays, then moves on. */
-.step { min-height: 100vh; display: flex; align-items: flex-start; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
-.step .card { position: sticky; top: 18vh; }
+/* Each card scrolls up as before and pauses briefly near the top left before moving on. */
+.step { min-height: 110vh; display: flex; align-items: center; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
+.step .card { position: sticky; top: 22vh; }
 /* A step right before a panel gets room to finish its motion before the panel covers the stage. */
-.step:has(+ .panel) { min-height: 150vh; }
+.step:has(+ .panel), .step:has(+ .results-flow) { min-height: 150vh; }
+/* Results: two cards slide up over the stage, which blurs and darkens behind them. */
+.stage-dim { position: absolute; inset: 0; background: #14140f; opacity: 0; pointer-events: none; }
+.results-flow { position: relative; pointer-events: auto; max-width: 1120px; margin: 0 auto; padding: 35vh max(20px, env(safe-area-inset-left)) 45vh; display: grid; gap: 65vh; }
+.result-card { background: var(--card); border-radius: 20px; padding: clamp(20px, 3vw, 36px); box-shadow: 0 24px 70px #14140f40; display: grid; gap: 20px; }
+.result-card h2 { font: 700 clamp(26px, 3.4vw, 36px)/1.1 var(--display); letter-spacing: -.025em; margin: 0; }
+.result-card > p { margin: -8px 0 0; max-width: 60ch; }
+.result-card .chart { background: none; border: 0; border-radius: 0; padding: 0; }
 /* Results and Limitations slide up over the sticky stage as panels. */
 .panel { position: relative; pointer-events: auto; background: var(--studio); border-radius: 28px 28px 0 0; box-shadow: 0 -20px 60px #14140f1f; padding-bottom: 120px; }
 .panel > .section { padding-top: 72px; }
@@ -175,7 +182,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 
 @media (max-width: 760px) {
   /* The 3D stage sits in the top part of the screen; the cards scroll through the bottom. */
-  .step { align-items: flex-end; padding-bottom: 6vh; }
+  .step { align-items: center; padding-bottom: 0; }
   .step .card { top: auto; bottom: 6vh; }
   .card { padding: 14px 18px; white-space: normal; max-width: 100%; }
   .card .phrase { font-size: min(18px, 4.6vw); text-wrap: balance; }
