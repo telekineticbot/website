@@ -87,6 +87,15 @@ function start() {
   buildTable(scene);
   const sink = buildSink(scene);
   const bowl = buildBowl(scene);
+  // A faint ring where the bowl was during the demo, so the miss is easy to see.
+  const oldSpot = new THREE.Mesh(
+    new THREE.RingGeometry(0.085, 0.1, 48),
+    new THREE.MeshBasicMaterial({ color: COLORS.accent, transparent: true, opacity: 0.7, depthWrite: false }),
+  );
+  oldSpot.rotation.x = -Math.PI / 2;
+  oldSpot.position.set(BOWL_START.x, 0.003, BOWL_START.z);
+  oldSpot.visible = false;
+  scene.add(oldSpot);
   const arm = buildArm(scene);
 
   const person = buildPerson(scene);
@@ -167,6 +176,7 @@ function start() {
       gripperTip: HOME,
       bowlPosition: BOWL_START.clone().lerp(BOWL_ROBOT_START, ease(clamp01((progress - 0.15) / 0.55))),
       snapBowl: true,
+      showOldSpot: progress > 0.15,
       tubes: [[demoTube, 1]],
       camera: sideShot,
     }),
@@ -178,6 +188,7 @@ function start() {
         gripperOpen: gripOpenAlong(demoPath, motion),
         bowlPosition: BOWL_ROBOT_START,
         snapBowl: true,
+        showOldSpot: true,
         tubes: [[demoTube, 1]],
         camera: sideShot,
       };
@@ -254,6 +265,7 @@ function start() {
     arm.meshes.forEach((mesh) => { mesh.visible = !state.hideRobot; });
     arm.handGroup.visible = !state.hideRobot;
     bowl.position.copy(shown.bowlPosition);
+    oldSpot.visible = Boolean(state.showOldSpot);
     person.group.visible = Boolean(state.person);
     if (state.person) posePerson(person, state.person.toolTip, state.person.toolOpen);
 
