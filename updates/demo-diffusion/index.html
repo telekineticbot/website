@@ -80,12 +80,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div class="sbs" data-synced-videos>
       <figure>
-        <figcaption>pi0.5 on its own</figcaption>
-        <div class="film"><video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+        <figcaption class="video-label">pi0.5 on its own</figcaption>
+        <div class="film-wrap">
+          <div class="film-glow" style="background-image:url(media/base-alone.jpg)" aria-hidden="true"></div>
+          <div class="film"><video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+        </div>
       </figure>
       <figure>
-        <figcaption class="with-demo">pi0.5 with one demo</figcaption>
-        <div class="film"><video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+        <figcaption class="video-label with-demo">pi0.5 with one demo</figcaption>
+        <div class="film-wrap">
+          <div class="film-glow" style="background-image:url(media/base-with-demo.jpg)" aria-hidden="true"></div>
+          <div class="film film-alt"><video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+        </div>
       </figure>
     </div>
     <p class="fine">Bowl into sink, same starting scene. Our demos were scripted robot runs. The animation above shows a person only to explain the idea.</p>
@@ -136,9 +142,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <h2 id="limits-title">Limitations</h2>
     <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
     <figure class="clip">
-      <div class="film" data-timed-captions>
+      <p class="video-label">pi0.5 with the wrong demo</p>
+      <div class="film-wrap">
+        <div class="film-glow" style="background-image:url(media/wrong-demo.jpg)" aria-hidden="true"></div>
+        <div class="film" data-timed-captions>
         <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video>
         <p class="film-caption" aria-live="off">Task: put the orange in the bowl.</p>
+      </div>
       </div>
       <figcaption>With the wrong demo, 0 of 8 tries put the orange in the bowl.</figcaption>
     </figure>
