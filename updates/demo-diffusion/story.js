@@ -27,8 +27,6 @@ const COLORS = {
   bowl: 0xf8f7f3,
   bowlInside: 0xc9472b,
   sink: 0x22221d,
-  plate: 0xf8f7f3,
-  wrong: 0x9b0f45,
 };
 
 // Scene layout in meters. The table top is at height 0.
@@ -39,7 +37,6 @@ const FOREARM_LENGTH = 0.42;
 const GRIPPER_LENGTH = 0.13;
 const BOWL_START = new THREE.Vector3(-0.38, 0, 0.12);
 const SINK_CENTER = new THREE.Vector3(0.4, 0, 0.06);
-const PLATE_CENTER = new THREE.Vector3(-0.02, 0, 0.34);
 const HOME = new THREE.Vector3(0.02, 0.46, -0.12);
 const SINK_DEPTH = 0.1;
 const SINK_HALF_WIDTH = 0.15;
@@ -75,6 +72,7 @@ function start() {
   keyLight.shadow.camera.bottom = -1.4;
   keyLight.shadow.radius = 6;
   keyLight.shadow.bias = -0.0004;
+  keyLight.shadow.normalBias = 0.015;
   scene.add(keyLight);
 
   // Floor that only shows shadows, so the page's studio gray shows through.
@@ -86,7 +84,6 @@ function start() {
 
   buildTable(scene);
   const sink = buildSink(scene);
-  const plate = buildPlate(scene);
   const bowl = buildBowl(scene);
   const arm = buildArm(scene);
 
@@ -119,31 +116,9 @@ function start() {
     v(-0.12, 0.38, -0.02),
   ], {});
 
-  const wrongPath = makePath([
-    HOME,
-    v(BOWL_START.x, 0.3, BOWL_START.z),
-    v(BOWL_START.x, 0.075, BOWL_START.z),
-    v(BOWL_START.x, 0.3, BOWL_START.z),
-    v(-0.2, 0.36, 0.3),
-    v(PLATE_CENTER.x, 0.24, PLATE_CENTER.z),
-    v(PLATE_CENTER.x, 0.095, PLATE_CENTER.z),
-    v(PLATE_CENTER.x, 0.3, PLATE_CENTER.z),
-  ], { grasp: 2, release: 6 });
-
   const demoTube = makeTube(scene, taskPath.curve, COLORS.accent, 0.0075);
   const ownTube = makeTube(scene, ownPath.curve, COLORS.ink, 0.006);
   const wanderTube = makeTube(scene, wanderPath.curve, COLORS.noise, 0.005);
-  const wrongTube = makeTube(scene, wrongPath.curve, COLORS.accent, 0.0075);
-  const practiceTubes = [];
-  for (let run = 0; run < 10; run += 1) {
-    const offsetPath = makePath(taskPath.points.map((point, index) => {
-      if (index === 0) return point.clone();
-      const seed = run * 13 + index * 7;
-      return point.clone().add(v(0.03 * Math.sin(seed), 0.025 * Math.sin(seed * 1.9), 0.03 * Math.cos(seed * 1.3)));
-    }), {});
-    practiceTubes.push(makeTube(scene, offsetPath.curve, COLORS.accent, 0.0035, 0.55));
-  }
-
   // Noise dots: each sits at a point along a path plus a random offset.
   const DOT_COUNT = 72;
   const dotGeometry = new THREE.SphereGeometry(0.009, 10, 8);
@@ -222,43 +197,9 @@ function start() {
         camera: [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)],
       };
     },
-    // 6. Results: pull back, with the bowl resting in the sink
-    (progress) => ({
-      gripperTip: HOME.clone().add(v(0.04 * Math.sin(progress * Math.PI), 0, 0)),
-      bowlPosition: v(SINK_CENTER.x, BOWL_IN_SINK_HEIGHT, SINK_CENTER.z),
-      tubes: [[ownTube, 1, 0.5]],
-      camera: [v(-0.35, 1.5, 2.25), v(0.05, 0.15, 0)],
-    }),
-    // 7. The wrong demo: it copies a different task and puts the bowl on the plate
-    (progress) => {
-      const draw = ease(clamp01(progress / 0.3));
-      const motion = ease(clamp01((progress - 0.3) / 0.65));
-      const pathPoint = wrongPath.curve.getPoint(motion);
-      return {
-        gripperTip: pathPoint,
-        bowlPosition: bowlAlong(wrongPath, motion, pathPoint, PLATE_CENTER, 0.018),
-        gripperOpen: gripOpenAlong(wrongPath, motion),
-        tubes: [[wrongTube, draw]],
-        camera: [v(0.1, 1.3, 1.85), v(0, 0.18, 0.06)],
-      };
-    },
-    // 8. Next: learn from 10 successful runs, then do the task with no demo
-    (progress) => {
-      const stack = ease(clamp01(progress / 0.35));
-      const motion = ease(clamp01((progress - 0.45) / 0.5));
-      const pathPoint = ownPath.curve.getPoint(motion);
-      return {
-        gripperTip: pathPoint,
-        bowlPosition: bowlAlong(ownPath, motion, pathPoint, SINK_CENTER, BOWL_IN_SINK_HEIGHT),
-        gripperOpen: gripOpenAlong(ownPath, motion),
-        practice: progress < 0.45 ? stack : Math.max(0, 1 - (progress - 0.45) / 0.1),
-        tubes: [[ownTube, motion]],
-        camera: [v(0.2, 1.25, 1.75), v(0.02, 0.18, 0)],
-      };
-    },
   ];
 
-  const allTubes = [demoTube, ownTube, wanderTube, wrongTube, ...practiceTubes];
+  const allTubes = [demoTube, ownTube, wanderTube];
 
   function currentStoryPosition() {
     const viewportMiddle = window.innerHeight * 0.55;
@@ -297,11 +238,6 @@ function start() {
       setTubeDrawn(tube, amount);
       tube.material.opacity = (opacity ?? 1) * tube.baseOpacity;
     }
-    practiceTubes.forEach((tube, index) => {
-      const amount = clamp01((state.practice ?? 0) * 10 - index);
-      setTubeDrawn(tube, amount > 0 ? 1 : 0);
-      tube.material.opacity = amount * tube.baseOpacity;
-    });
 
     if (state.dots) {
       dots.visible = true;
@@ -320,7 +256,6 @@ function start() {
       dots.visible = false;
     }
 
-    plate.visible = true;
 
     camera.position.copy(shown.cameraPosition);
     camera.lookAt(shown.cameraTarget);
@@ -398,43 +333,40 @@ function buildTable(scene) {
 }
 
 function buildSink(scene) {
-  // A brushed steel basin set into the counter, with a thin rim, a drain and an arched tap.
+  // An undermount steel basin: the counter's cut edge forms the top of the opening,
+  // and a closed steel box hangs below it, so no two surfaces share a plane.
   const group = new THREE.Group();
-  const steelMaterial = new THREE.MeshStandardMaterial({ color: 0xb4b7b1, roughness: 0.32, metalness: 0.75, side: THREE.DoubleSide });
-  const basinMaterial = new THREE.MeshStandardMaterial({ color: 0x9a9d97, roughness: 0.4, metalness: 0.7, side: THREE.DoubleSide });
-  const width = SINK_HALF_WIDTH * 2, depth = SINK_HALF_DEPTH * 2;
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), basinMaterial);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -SINK_DEPTH;
-  floor.receiveShadow = true;
-  group.add(floor);
-  for (const [wallWidth, x, z, turn] of [
-    [width, 0, -SINK_HALF_DEPTH, 0], [width, 0, SINK_HALF_DEPTH, 0],
-    [depth, -SINK_HALF_WIDTH, 0, Math.PI / 2], [depth, SINK_HALF_WIDTH, 0, Math.PI / 2],
-  ]) {
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(wallWidth, SINK_DEPTH), basinMaterial);
-    wall.position.set(x, -SINK_DEPTH / 2, z);
-    wall.rotation.y = turn;
-    wall.receiveShadow = true;
-    group.add(wall);
+  const basinMaterial = new THREE.MeshStandardMaterial({ color: 0xa7aaa4, roughness: 0.45, metalness: 0.55 });
+  const wall = 0.006;
+  const counterThickness = 0.05;
+  const basinTop = -counterThickness;
+  const basinHeight = SINK_DEPTH - counterThickness;
+  const outerWidth = SINK_HALF_WIDTH * 2 + wall * 2;
+  const outerDepth = SINK_HALF_DEPTH * 2 + wall * 2;
+  const pieces = [
+    // floor, with its top face at the basin's depth
+    [outerWidth, wall, outerDepth, 0, -SINK_DEPTH - wall / 2, 0],
+    // four walls just outside the opening, below the counter
+    [outerWidth, basinHeight, wall, 0, basinTop - basinHeight / 2, -SINK_HALF_DEPTH - wall / 2],
+    [outerWidth, basinHeight, wall, 0, basinTop - basinHeight / 2, SINK_HALF_DEPTH + wall / 2],
+    [wall, basinHeight, SINK_HALF_DEPTH * 2, -SINK_HALF_WIDTH - wall / 2, basinTop - basinHeight / 2, 0],
+    [wall, basinHeight, SINK_HALF_DEPTH * 2, SINK_HALF_WIDTH + wall / 2, basinTop - basinHeight / 2, 0],
+  ];
+  for (const [width, height, depth, x, y, z] of pieces) {
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), basinMaterial);
+    piece.position.set(x, y, z);
+    piece.receiveShadow = true;
+    group.add(piece);
   }
-  const drain = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.003, 32), new THREE.MeshStandardMaterial({ color: 0x3c3d39, roughness: 0.5, metalness: 0.6 }));
-  drain.position.y = -SINK_DEPTH + 0.002;
+  const drain = new THREE.Mesh(
+    new THREE.CircleGeometry(0.022, 32),
+    new THREE.MeshStandardMaterial({ color: 0x4a4b46, roughness: 0.5, metalness: 0.5 }),
+  );
+  drain.rotation.x = -Math.PI / 2;
+  drain.position.y = -SINK_DEPTH + 0.0015;
   group.add(drain);
-  const rimWidth = 0.022;
-  for (const [rimX, rimZ, x, z] of [
-    [width + rimWidth * 2, rimWidth, 0, -SINK_HALF_DEPTH - rimWidth / 2],
-    [width + rimWidth * 2, rimWidth, 0, SINK_HALF_DEPTH + rimWidth / 2],
-    [rimWidth, depth, -SINK_HALF_WIDTH - rimWidth / 2, 0],
-    [rimWidth, depth, SINK_HALF_WIDTH + rimWidth / 2, 0],
-  ]) {
-    const rim = new THREE.Mesh(new THREE.BoxGeometry(rimX, 0.006, rimZ), steelMaterial);
-    rim.position.set(x, 0.003, z);
-    rim.receiveShadow = true;
-    group.add(rim);
-  }
-  // Tap on the right side of the basin, away from the arm's path, arching over the edge.
-  const tapMaterial = new THREE.MeshStandardMaterial({ color: 0xd9dbd6, roughness: 0.15, metalness: 0.95 });
+  // Tap on the right side of the opening, away from the arm's path.
+  const tapMaterial = new THREE.MeshStandardMaterial({ color: 0xd9dbd6, roughness: 0.2, metalness: 0.9 });
   const tapSide = SINK_HALF_WIDTH + 0.05;
   const tapCurve = new THREE.CatmullRomCurve3([
     v(tapSide, 0, 0), v(tapSide, 0.17, 0), v(tapSide - 0.03, 0.22, 0), v(tapSide - 0.065, 0.2, 0), v(tapSide - 0.07, 0.165, 0),
@@ -449,18 +381,6 @@ function buildSink(scene) {
   group.position.copy(SINK_CENTER);
   scene.add(group);
   return { group };
-}
-
-function buildPlate(scene) {
-  const plate = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.085, 0.014, 48),
-    new THREE.MeshStandardMaterial({ color: COLORS.plate, roughness: 0.3 }),
-  );
-  plate.position.copy(PLATE_CENTER).add(v(0, 0.007, 0));
-  plate.castShadow = true;
-  plate.receiveShadow = true;
-  scene.add(plate);
-  return plate;
 }
 
 function buildBowl(scene) {
@@ -478,8 +398,13 @@ function buildBowl(scene) {
     new THREE.LatheGeometry(outline.map((point) => new THREE.Vector2(point.x * 0.9, point.y + 0.004)), 48),
     new THREE.MeshStandardMaterial({ color: COLORS.bowlInside, roughness: 0.35, side: THREE.BackSide }),
   );
+  // Close the bottom so the bowl doesn't show a hole from above.
+  const bottom = new THREE.Mesh(new THREE.CircleGeometry(0.03, 32), inside.material);
+  bottom.material = new THREE.MeshStandardMaterial({ color: COLORS.bowlInside, roughness: 0.35 });
+  bottom.rotation.x = -Math.PI / 2;
+  bottom.position.y = 0.004;
   const group = new THREE.Group();
-  group.add(outside, inside);
+  group.add(outside, inside, bottom);
   outside.castShadow = true;
   group.position.copy(BOWL_START);
   scene.add(group);
