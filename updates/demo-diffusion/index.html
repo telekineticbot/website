@@ -81,11 +81,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="sbs" data-synced-videos>
       <figure>
         <figcaption>pi0.5 on its own</figcaption>
-        <video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline controls preload="auto"></video>
+        <div class="film"><video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline preload="auto"></video></div>
       </figure>
       <figure>
         <figcaption class="with-demo">pi0.5 with one demo</figcaption>
-        <video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline controls preload="auto"></video>
+        <div class="film"><video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
       </figure>
     </div>
     <p class="fine">Bowl into sink, same starting scene. Our demos were scripted robot runs. The animation above shows a person only to explain the idea.</p>
@@ -136,8 +136,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <h2 id="limits-title">Limitations</h2>
     <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
     <figure class="clip">
-      <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline controls preload="auto"></video>
-      <figcaption>Asked to put the orange in the bowl, but shown a demo of a different task, it follows the demo.</figcaption>
+      <div class="film" data-timed-captions>
+        <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video>
+        <p class="film-caption" aria-live="off">Task: put the orange in the bowl.</p>
+      </div>
+      <figcaption>With the wrong demo, 0 of 8 tries put the orange in the bowl.</figcaption>
     </figure>
   </section>
 
@@ -166,7 +169,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
 </script>
 <script>
-  // Keep the two result videos in step: play, pause and seeking on one is copied to the other.
+  // Keep the two result videos in step: they have no controls, so they start together and drift is corrected.
   (function () {
     var group = document.querySelector('[data-synced-videos]');
     if (!group) return;
@@ -261,6 +264,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     // If the page opens with the chart already on screen, wait a moment so the grow is visible.
     setTimeout(checkInView, 400);
+  })();
+</script>
+<script>
+  // Captions over the limitations clip, each shown for a third of every loop.
+  (function () {
+    var film = document.querySelector('[data-timed-captions]');
+    if (!film) return;
+    var video = film.querySelector('video');
+    var caption = film.querySelector('.film-caption');
+    var lines = ['Task: put the orange in the bowl.', "But it's shown a demo of a different task.", 'So it follows the demo instead.'];
+    var shownIndex = 0;
+    video.addEventListener('timeupdate', function () {
+      if (!video.duration) return;
+      var index = Math.min(lines.length - 1, Math.floor(video.currentTime / video.duration * lines.length));
+      if (index === shownIndex) return;
+      shownIndex = index;
+      caption.classList.add('is-changing');
+      setTimeout(function () { caption.textContent = lines[index]; caption.classList.remove('is-changing'); }, 180);
+    });
   })();
 </script>
 <script type="module" src="story.js"></script>
