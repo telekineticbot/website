@@ -47,8 +47,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <article>
   <section class="intro">
     <h1>One demo. <em>No retraining.</em></h1>
-    <p class="dek">Testing the limits of DemoDiffusion.</p>
-    <p class="byline"><span>Research by Vrishabh Kenkre</span><span>Inspired by <a href="#citations">DemoDiffusion</a></span><span><time datetime="2026-11-17">November 17, 2026</time></span></p>
+    <p class="dek">Teaching Robots Instantly</p>
+    <p class="byline"><span>Research by Vrishabh Kenkre</span><span><time datetime="2026-11-17">November 17, 2026</time></span></p>
     <a class="scroll-caret" href="#story" aria-label="Scroll down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   </section>
 
@@ -66,87 +66,94 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="step"><div class="card"><p class="phrase">We add noise to the demo.</p></div></div>
       <div class="step"><div class="card"><p class="phrase">The robot cleans it up to fit.</p></div></div>
       <div class="step"><div class="card"><p class="phrase">The bowl goes in the sink.</p></div></div>
+
+      <div class="panel">
+      <section class="section" aria-labelledby="results-title">
+        <h2 id="results-title">Results</h2>
+        <p>The same frozen pi0.5 in the same simulated kitchen, with and without one demo.</p>
+
+        <div class="sbs" data-synced-videos>
+          <figure>
+            <div class="film-wrap">
+              <p class="video-label">pi0.5 on its own</p>
+              <div class="film-glow" style="background-image:url(media/base-alone.jpg)" aria-hidden="true"></div>
+              <div class="film"><video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+            </div>
+          </figure>
+          <figure>
+            <div class="film-wrap">
+              <p class="video-label with-demo">pi0.5 with one demo</p>
+              <div class="film-glow" style="background-image:url(media/base-with-demo.jpg)" aria-hidden="true"></div>
+              <div class="film film-alt"><video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+            </div>
+          </figure>
+        </div>
+        <p class="fine">Bowl into sink, same starting scene. Our demos were scripted robot runs. The animation above shows a person only to explain the idea.</p>
+
+        <div class="chart" role="img" aria-label="Task success rate. Bowl into sink: 0 of 16 on its own, 10 of 16 with one demo. Orange into bowl: 0 of 49, 8 of 49. Apple onto plate: 0 of 16, 3 of 16. Stack a block: 0 of 16, 3 of 16.">
+          <div class="chart-head">
+            <h3>Task success rate</h3>
+            <p class="chart-legend"><span><i class="base"></i>On its own</span><span><i class="demo"></i>With one demo</span></p>
+          </div>
+          <div class="chart-plot">
+            <div class="chart-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+            <div class="chart-area">
+              <div class="chart-group" style="--delay:0.00s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
+                  <div class="chart-col demo" style="--value:62.5%"><span>10/16</span></div>
+                </div>
+                <p class="chart-task">Bowl into sink</p>
+              </div>
+              <div class="chart-group" style="--delay:0.15s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/49</span></div>
+                  <div class="chart-col demo" style="--value:16.3%"><span>8/49</span></div>
+                </div>
+                <p class="chart-task">Orange into bowl</p>
+              </div>
+              <div class="chart-group" style="--delay:0.30s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
+                  <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
+                </div>
+                <p class="chart-task">Apple onto plate</p>
+              </div>
+              <div class="chart-group" style="--delay:0.45s">
+                <div class="chart-cols">
+                  <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
+                  <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
+                </div>
+                <p class="chart-task">Stack a block</p>
+              </div>
+            </div>
+          </div>
+          <p class="fine">Object positions change on every try.</p>
+        </div>
+      </section>
+      </div>
+
+      <div class="step"><div class="card"><p class="phrase">New task: put the orange in the bowl.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">But the demo shows a different task.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The robot follows the demo anyway.</p></div></div>
+
+      <div class="panel">
+      <section class="section" aria-labelledby="limits-title">
+        <h2 id="limits-title">Limitations</h2>
+        <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
+        <figure class="clip">
+          <div class="film-wrap">
+            <p class="video-label">pi0.5 with the wrong demo</p>
+            <div class="film-glow" style="background-image:url(media/wrong-demo.jpg)" aria-hidden="true"></div>
+            <div class="film"><video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
+          </div>
+        </figure>
+      </section>
+      </div>
     </div>
   </section>
 
-  <section class="section" aria-labelledby="results-title">
-    <h2 id="results-title">Results</h2>
-    <p>The same frozen pi0.5 in the same simulated kitchen, with and without one demo.</p>
 
-    <div class="sbs" data-synced-videos>
-      <figure>
-        <div class="film-wrap">
-          <p class="video-label">pi0.5 on its own</p>
-          <div class="film-glow" style="background-image:url(media/base-alone.jpg)" aria-hidden="true"></div>
-          <div class="film"><video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline preload="auto"></video></div>
-        </div>
-      </figure>
-      <figure>
-        <div class="film-wrap">
-          <p class="video-label with-demo">pi0.5 with one demo</p>
-          <div class="film-glow" style="background-image:url(media/base-with-demo.jpg)" aria-hidden="true"></div>
-          <div class="film film-alt"><video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
-        </div>
-      </figure>
-    </div>
-    <p class="fine">Bowl into sink, same starting scene. Our demos were scripted robot runs. The animation above shows a person only to explain the idea.</p>
-
-    <div class="chart" role="img" aria-label="Task success rate. Bowl into sink: 0 of 16 on its own, 10 of 16 with one demo. Orange into bowl: 0 of 49, 8 of 49. Apple onto plate: 0 of 16, 3 of 16. Stack a block: 0 of 16, 3 of 16.">
-      <div class="chart-head">
-        <h3>Task success rate</h3>
-        <p class="chart-legend"><span><i class="base"></i>On its own</span><span><i class="demo"></i>With one demo</span></p>
-      </div>
-      <div class="chart-plot">
-        <div class="chart-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
-        <div class="chart-area">
-          <div class="chart-group" style="--delay:0.00s">
-            <div class="chart-cols">
-              <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
-              <div class="chart-col demo" style="--value:62.5%"><span>10/16</span></div>
-            </div>
-            <p class="chart-task">Bowl into sink</p>
-          </div>
-          <div class="chart-group" style="--delay:0.15s">
-            <div class="chart-cols">
-              <div class="chart-col base" style="--value:0%"><span>0/49</span></div>
-              <div class="chart-col demo" style="--value:16.3%"><span>8/49</span></div>
-            </div>
-            <p class="chart-task">Orange into bowl</p>
-          </div>
-          <div class="chart-group" style="--delay:0.30s">
-            <div class="chart-cols">
-              <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
-              <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
-            </div>
-            <p class="chart-task">Apple onto plate</p>
-          </div>
-          <div class="chart-group" style="--delay:0.45s">
-            <div class="chart-cols">
-              <div class="chart-col base" style="--value:0%"><span>0/16</span></div>
-              <div class="chart-col demo" style="--value:18.8%"><span>3/16</span></div>
-            </div>
-            <p class="chart-task">Stack a block</p>
-          </div>
-        </div>
-      </div>
-      <p class="fine">Object positions change on every try.</p>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="limits-title">
-    <h2 id="limits-title">Limitations</h2>
-    <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
-    <figure class="clip">
-      <div class="film-wrap" data-timed-captions>
-        <div class="video-label caption-pill">
-          <span class="pill-title">pi0.5 with the wrong demo</span>
-          <span class="pill-caption" aria-live="off">Task: put the orange in the bowl.</span>
-        </div>
-        <div class="film-glow" style="background-image:url(media/wrong-demo.jpg)" aria-hidden="true"></div>
-        <div class="film"><video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
-      </div>
-    </figure>
-  </section>
 
   <section class="section" aria-labelledby="citations">
     <h2 id="citations">Citations</h2>
@@ -159,7 +166,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <p>Designed &amp; manufactured in San Francisco.</p>
     <p><a href="../">All updates</a></p>
   </div>
 </footer>
@@ -268,46 +274,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     // If the page opens with the chart already on screen, wait a moment so the grow is visible.
     setTimeout(checkInView, 400);
-  })();
-</script>
-<script>
-  // Captions inside the limitations clip's label pill, each shown for a third of every loop.
-  // The pill eases to its new size while the caption text crossfades.
-  (function () {
-    var film = document.querySelector('[data-timed-captions]');
-    if (!film) return;
-    var video = film.querySelector('video');
-    var pill = film.querySelector('.caption-pill');
-    var caption = pill.querySelector('.pill-caption');
-    var lines = ['Task: put the orange in the bowl.', "But it's shown a demo of a different task.", 'So it follows the demo instead.'];
-    var shownIndex = 0;
-    var fadeMs = 220;
-    function naturalSize() {
-      var lockedWidth = pill.style.width, lockedHeight = pill.style.height;
-      pill.style.width = ''; pill.style.height = '';
-      var box = pill.getBoundingClientRect();
-      pill.style.width = lockedWidth; pill.style.height = lockedHeight;
-      return box;
-    }
-    function lockSize(box) { pill.style.width = box.width + 'px'; pill.style.height = box.height + 'px'; }
-    window.addEventListener('resize', function () { pill.style.width = ''; pill.style.height = ''; });
-    video.addEventListener('timeupdate', function () {
-      if (!video.duration) return;
-      var index = Math.min(lines.length - 1, Math.floor(video.currentTime / video.duration * lines.length));
-      if (index === shownIndex) return;
-      shownIndex = index;
-      lockSize(pill.getBoundingClientRect());
-      caption.classList.add('is-changing');
-      setTimeout(function () {
-        var currentBox = pill.getBoundingClientRect();
-        caption.textContent = lines[index];
-        var targetBox = naturalSize();
-        lockSize(currentBox);
-        void pill.offsetWidth;
-        lockSize(targetBox);
-        setTimeout(function () { caption.classList.remove('is-changing'); }, 180);
-      }, fadeMs);
-    });
   })();
 </script>
 <script type="module" src="story.js"></script>

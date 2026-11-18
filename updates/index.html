@@ -27,6 +27,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta property="og:description" content="Research updates from Telekinetic.">
 <meta property="og:image" content="https://telekinetic.bot/updates/demo-diffusion/media/demo-path-overlay.jpg">
 <link rel="stylesheet" href="updates.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -49,11 +50,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <ul class="post-list">
       <li>
         <a href="demo-diffusion/">
-          <img src="demo-diffusion/media/demo-path-overlay.jpg" alt="A simulated robot arm over a kitchen sink, with the expert demo's path drawn in yellow" loading="lazy" width="1280" height="720">
+          <div class="post-preview" data-story-loop role="img" aria-label="Animation: a person shows the robot how to put a bowl in the sink, the bowl moves a little, and the robot adapts the demo to put it in the sink."><canvas aria-hidden="true"></canvas></div>
           <div>
-            <p class="post-meta"><time datetime="2026-11-17">November 17, 2026</time> · Research by Vrishabh Kenkre</p>
+            <p class="post-meta"><time datetime="2026-11-17">November 17, 2026</time></p>
             <h2>One demo. No retraining.</h2>
-            <p>We showed a frozen robot model one example of a task. On some tasks, it went from never succeeding to succeeding most of the time.</p>
+            <p>Teaching Robots Instantly</p>
           </div>
         </a>
       </li>
@@ -63,9 +64,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <p>Designed &amp; manufactured in San Francisco.</p>
     <p><a href="../">Home</a></p>
   </div>
 </footer>
+<script type="module" src="demo-diffusion/story.js"></script>
 </body>
 </html>
