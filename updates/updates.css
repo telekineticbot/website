@@ -64,7 +64,13 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .card-flow { position: relative; pointer-events: auto; max-width: 1120px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); display: grid; gap: 90vh; }
 .card-slot { min-height: 130vh; }
 .card-slot > .result-card { position: sticky; top: 12vh; }
-.result-card { background: var(--card); border-radius: 20px; padding: clamp(20px, 3vw, 36px); box-shadow: 0 24px 70px #14140f40; display: grid; gap: 20px; }
+/* No box: the content sits straight on the blurred, darkened animation, in light type. */
+.result-card { --on-dim: #f6f5f1; --on-dim-soft: #f6f5f1b8; --on-dim-faint: #f6f5f12e; color: var(--on-dim); display: grid; gap: 20px; }
+.result-card .fine, .result-card .chart-legend, .result-card .chart-axis, .result-card .chart-col span { color: var(--on-dim-soft); }
+.result-card .chart-col.demo span { color: var(--on-dim); }
+.result-card .chart-col.base, .result-card .chart-legend i.base { background: #f6f5f166; }
+.result-card .chart-cols { border-bottom-color: var(--on-dim-soft);
+  background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), var(--on-dim-faint) calc(25% - 1px), var(--on-dim-faint) 25%); }
 .result-card h2 { font: 700 clamp(26px, 3.4vw, 36px)/1.1 var(--display); letter-spacing: -.025em; margin: 0; }
 .result-card > p { margin: -8px 0 0; max-width: 60ch; }
 .result-card .chart { background: none; border: 0; border-radius: 0; padding: 0; }
@@ -198,4 +204,6 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 /* Text-only story when there is no WebGL */
 .no-webgl .card { opacity: 1; transform: none; }
 .no-webgl .bar-fill { width: var(--value); }
-.no-webgl 
+.no-webgl /* Without WebGL there is no darkened scene behind the results, so they keep dark type. */
+.no-webgl .result-card { --on-dim: var(--ink); --on-dim-soft: var(--ink-soft); --on-dim-faint: #14140f14; }
+.no-webgl .result-card .chart-col.base, .no-webgl .result-card .chart-legend i.base { background: #14140f59; }

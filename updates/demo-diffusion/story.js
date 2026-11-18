@@ -59,7 +59,7 @@ function start(stageElement, mode) {
     const dim = Math.round(Math.max(...cardFlows.map(dimForFlow)) * 100) / 100;
     if (dim === shownDim) return;
     shownDim = dim;
-    dimLayer.style.opacity = String(0.45 * dim);
+    dimLayer.style.opacity = String(0.62 * dim);
     canvas.style.filter = dim > 0 ? `blur(${(10 * dim).toFixed(1)}px)` : '';
   }
   const stepElements = mode === 'scroll' ? [...document.querySelectorAll('.step')] : [];
