@@ -315,82 +315,6 @@ const DEFAULT_VIEW = { position: v(0.42, 0.92, 1.32), target: v(-0.16, 0.15, -0.
 // A wider view for figures whose grasps spread over the whole table.
 const WIDE_VIEW = { position: v(0.44, 1.02, 1.5), target: v(-0.14, 0.13, -0.02), fov: 31 };
 
-// 1. One success starts learning: misses, one lift, then every try lifts.
-export function figureOneSuccess(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const found = rimPinch(BOWL, Math.PI * 1.25);
-  const misses = [missAt(-0.29, 0.13), missAt(0.1, 0.12), missAt(-0.16, 0.38), missAt(-0.3, 0.3)];
-  const targets = [
-    ...misses.map((grasp) => ({ grasp, lifts: false })),
-    { grasp: found, lifts: true },
-    ...[0, 1].map(() => ({ grasp: found, lifts: true })),
-  ];
-  const sequence = trySequence(targets, { pace: 0.55, gap: 0.12 });
-  const marks = buildMarks(parts, misses.length);
-  const duration = sequence.end + 1.4;
-  return {
-    duration, still: sequence.tries[misses.length].start + 2.6 * 0.55, camera: DEFAULT_VIEW,
-    update(time) {
-      applyMotion(parts, sequence.motion.at(time));
-      const fadeAll = 1 - clamp01((time - sequence.end - 0.2) / 0.9);
-      sequence.tries.slice(0, misses.length).forEach((tryInfo, index) => showMark(marks[index], tryInfo.grasp, time > tryInfo.closeAt ? fadeAll : 0));
-      return { strip: sequence.tries.map((tryInfo) => ({ done: time > tryInfo.closeAt ? fadeAll : 0, works: tryInfo.lifts, current: time >= tryInfo.start && time < tryInfo.end })) };
-    },
-  };
-}
-
-// 2. Tries must be new and safe: three panels side by side.
-export function figureThreeTries(makeScene) {
-  const view = { position: v(0.06, 0.55, 0.86), target: v(-0.06, 0.08, 0.15), fov: 36 };
-  const habit = missAt(-0.27, 0.17);
-  // Panel 1: the same miss again, on top of its old mark.
-  const same = buildRobotScene(makeScene());
-  const sameMark = buildMarks(same, 1)[0];
-  const sameMotion = track(tryKeys(habit, { start: 0.6 }));
-  // Panel 2: a fast, random swing that ends by sweeping through the bowl and knocking it away.
-  const random = buildRobotScene(makeScene());
-  const jitter = seededRandom(5);
-  const swing = [restPose()];
-  for (let index = 0; index < 5; index += 1) {
-    swing.push(pose(v(-0.42 + jitter() * 0.6, 0.06 + jitter() * 0.3, -0.05 + jitter() * 0.4), jitter() * Math.PI));
-  }
-  const sweepStart = pose(v(-0.32, 0.035, 0.21), 0.3);
-  const sweepEnd = pose(v(0.06, 0.035, 0.19), 0.3);
-  const swingKeys = [{ at: 0, grasp: restPose(), open: 1, hold: false }];
-  let time = 0.6;
-  for (const grasp of swing.slice(1)) { time += 0.32; swingKeys.push({ at: time, grasp, open: jitter(), hold: false }); }
-  swingKeys.push({ at: time + 0.4, grasp: sweepStart, open: 0.6, hold: false });
-  swingKeys.push({ at: time + 0.75, grasp: sweepEnd, open: 0.6, hold: false });
-  swingKeys.push({ at: time + 1.9, grasp: restPose(), open: 1, hold: false });
-  const swingMotion = track(swingKeys);
-  const contactTime = time + 0.4 + 0.35 * 0.35;
-  const sweepEndTime = time + 0.75;
-  // Panel 3: a new, realistic grasp: a pinch on the far side of the rim, lifted and set down.
-  const fresh = buildRobotScene(makeScene());
-  const freshMotion = track(tryKeys(rimPinch(BOWL, Math.PI * 0.35), { lifts: true, start: 0.6 }));
-  const duration = 7.2;
-  return {
-    duration, still: 2.7, camera: view,
-    panels: [same.scene, random.scene, fresh.scene],
-    update(clock) {
-      applyMotion(same, sameMotion.at(clock));
-      showMark(sameMark, habit, 1);
-      const swingState = swingMotion.at(clock);
-      applyMotion(random, swingState);
-      // The bowl is pushed along while the hand sweeps through it, then slides back for the next try.
-      const pushed = clamp01((clock - contactTime) / (sweepEndTime - contactTime));
-      const back = ease(clamp01((clock - (duration - 1.6)) / 1.2));
-      const shove = ease(pushed) * (1 - back);
-      random.bowl.position.copy(BOWL).add(v(0.2 * shove, 0, -0.03 * shove));
-      random.bowl.rotation.set(0, 0, -0.5 * Math.sin(Math.PI * clamp01(pushed * 1.2)) * (1 - back));
-      applyMotion(fresh, freshMotion.at(clock));
-      return { flash: clock > contactTime && clock < contactTime + 0.8 ? 1 : 0 };
-    },
-  };
-}
-
-// The twenty noise samples shared by figures 4 and 10, picked so that, run through the action
-// model, they land on twenty different grasps.
 let sharedNoise = null;
 function twentyNoises(data) {
   if (sharedNoise) return sharedNoise;
@@ -409,110 +333,6 @@ function twentyNoises(data) {
   return picked;
 }
 
-// 4. One action per state: twenty samples flow straight to the one recorded grasp.
-export function figureOneAction(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const data = actionData();
-  const samples = twentyNoises(data);
-  const recorded = rimPinch(BOWL, Math.PI * 1.25);
-  const ghosts = buildGhosts(parts.scene, samples.length, COLORS.ink);
-  const duration = 7.6;
-  return {
-    duration, still: 4.6, camera: DEFAULT_VIEW,
-    update(time) {
-      applyMotion(parts, { grasp: restPose(), open: 1, hold: false });
-      const flowAmount = ease(clamp01((time - 1.4) / 2.6));
-      const fade = window01(time, 0.2, duration - 0.3, 0.9, 1.1);
-      samples.forEach((sample, index) => {
-        const noise = noisePose(sample.noise, sample.lean, 1);
-        const grasp = blendPose(noise, recorded, flowAmount);
-        const opacity = fade * (0.22 + 0.3 * flowAmount);
-        showGhost(ghosts[index], grasp, opacity, 0.3 + 0.0 * index);
-        ghosts[index].material.color.setHex(COLORS.ink);
-      });
-      return { label: flowAmount };
-    },
-  };
-}
-
-// 5. Off the data: two seen states blend into one grasp that misses the real bowl, every try.
-export function figureBlend(makeScene) {
-  const seenLeft = v(-0.3, 0, 0.04), seenRight = v(0.14, 0, 0.04);
-  const parts = buildRobotScene(makeScene());
-  const faintBowls = [seenLeft, seenRight].map((center) => {
-    const faint = buildBowl(parts.scene);
-    faint.position.copy(center);
-    faint.traverse((mesh) => {
-      if (mesh.material) { mesh.material = mesh.material.clone(); mesh.material.transparent = true; mesh.material.opacity = 0; mesh.material.depthWrite = false; mesh.castShadow = false; }
-    });
-    return faint;
-  });
-  const leftGrasp = rimPinch(seenLeft, Math.PI), rightGrasp = rimPinch(seenRight, Math.PI);
-  const blended = blendPose(leftGrasp, rightGrasp, 0.5);
-  const [leftGhost, rightGhost] = buildGhosts(parts.scene, 2, COLORS.ink);
-  const marks = buildMarks(parts, 1);
-  const sequence = trySequence([0, 1, 2].map(() => ({ grasp: blended, lifts: false })), { pace: 0.7, gap: 0.2, lead: 3.2 });
-  const duration = sequence.end + 1.2;
-  return {
-    duration, still: sequence.tries[0].closeAt + 0.1, camera: DEFAULT_VIEW,
-    update(time) {
-      const fadeAll = 1 - clamp01((time - sequence.end) / 0.9);
-      const seen = window01(time, 0.1, duration - 0.2, 0.7, 0.9);
-      faintBowls.forEach((faint) => faint.traverse((mesh) => { if (mesh.material) mesh.material.opacity = 0.32 * seen; }));
-      const together = ease(clamp01((time - 1.2) / 1.6));
-      showGhost(leftGhost, blendPose(leftGrasp, blended, together), 0.4 * seen);
-      showGhost(rightGhost, blendPose(rightGrasp, blended, together), 0.4 * seen);
-      applyMotion(parts, sequence.motion.at(time));
-      showMark(marks[0], blended, time > sequence.tries[0].closeAt ? fadeAll : 0);
-      return { strip: sequence.tries.map((tryInfo) => ({ done: time > tryInfo.closeAt ? fadeAll : 0, works: false, current: time >= tryInfo.start && time < tryInfo.end })) };
-    },
-  };
-}
-
-// 7. Gaussian action noise: random copies of the missed grasp, small, medium and large.
-export function figureGaussian(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const miss = missAt(-0.27, 0.17);
-  const random = seededRandom(33);
-  const copies = Array.from({ length: 28 }, () => ({ noise: normalNoise(random), lean: normalNoise(random) }));
-  const ghosts = buildGhosts(parts.scene, copies.length, COLORS.noise);
-  const missGhost = buildGhostHand(parts.scene, COLORS.ink);
-  const marks = buildMarks(parts, 1);
-  const sizes = [0.015, 0.04, 0.17];
-  const duration = 9.6;
-  const sizeAt = (time) => {
-    // Hold each size for a while, easing from one to the next, and back to nothing at the end.
-    const stops = [[0.8, 0], [1.6, sizes[0]], [3.2, sizes[0]], [3.9, sizes[1]], [5.5, sizes[1]], [6.2, sizes[2]], [8.4, sizes[2]], [9.2, 0]];
-    for (let index = 0; index < stops.length - 1; index += 1) {
-      const [from, low] = stops[index], [to, high] = stops[index + 1];
-      if (time < to) return time < from ? (index === 0 ? 0 : low) : low + (high - low) * ease((time - from) / (to - from));
-    }
-    return 0;
-  };
-  return {
-    duration, still: 7.2, camera: DEFAULT_VIEW,
-    update(time) {
-      applyMotion(parts, { grasp: restPose(), open: 1, hold: false });
-      const size = sizeAt(time);
-      const shown = window01(time, 0.1, duration - 0.1, 0.6, 0.6);
-      showGhost(missGhost, miss, 0.55 * shown, 0);
-      showMark(marks[0], miss, shown);
-      let unsafe = 0;
-      copies.forEach((copy, index) => {
-        const tip = miss.tip.clone().add(v(copy.noise[0], copy.noise[1] * 0.6, copy.noise[2]).multiplyScalar(size));
-        const grasp = pose(tip, miss.yaw + copy.noise[3] * size * 9, copy.lean[0] * size * 3, copy.lean[1] * size * 3);
-        // Copies that drive into the table or into the bowl turn red.
-        showGhost(ghosts[index], grasp, 1, 0);
-        const bad = fingersHit(ghosts[index]);
-        if (bad && size > 0.001) unsafe += 1;
-        ghosts[index].material.color.setHex(bad ? RED : COLORS.noise);
-        showGhost(ghosts[index], grasp, shown * clamp01(size / 0.012) * (bad ? 0.6 : 0.32), 0);
-      });
-      return { size, unsafe };
-    },
-  };
-}
-
 // Whether a faint hand's fingers go into the table or into the bowl.
 function fingersHit(ghost) {
   ghost.group.updateMatrixWorld(true);
@@ -523,56 +343,7 @@ function fingersHit(ghost) {
   }));
 }
 
-// 8. Steering the input noise: the noise sweeps its whole range, the grasp barely moves.
-export function figureSteering(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const miss = missAt(-0.27, 0.17);
-  const hover = lifted(miss, 0.025);
-  const duration = 8;
-  return {
-    duration, still: 2, camera: DEFAULT_VIEW,
-    update(time) {
-      const settle = window01(time, 0, duration, 1.4, 1.4);
-      const sweep = Math.sin((2 * Math.PI * time) / duration);
-      // The grasp moves about 3 millimeters while the noise goes from one end of its range to the other.
-      const grasp = blendPose(restPose(), { ...hover, tip: hover.tip.clone().add(v(0.003 * sweep, 0, 0.002 * Math.cos((2 * Math.PI * time) / duration))) }, settle);
-      applyMotion(parts, { grasp, open: 1, hold: false });
-      return { noise: sweep * settle, grasp: 0.03 * sweep * settle };
-    },
-  };
-}
-
-// 9. Sampling many and picking the best: sixteen samples arrive on one spot; the pick is the miss.
-export function figureBestOf(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const miss = missAt(-0.27, 0.17);
-  const random = seededRandom(71);
-  const offsets = Array.from({ length: 16 }, () => v((random() - 0.5) * 0.006, 0, (random() - 0.5) * 0.006));
-  const ghosts = buildGhosts(parts.scene, 16, COLORS.ink);
-  const marks = buildMarks(parts, 1);
-  const pickStart = 0.5 + 16 * 0.22 + 0.5;
-  const motion = track(tryKeys(miss, { start: pickStart + 0.9, pace: 0.8 }));
-  const duration = motion.duration + 1.2;
-  return {
-    duration, still: pickStart + 0.6, camera: DEFAULT_VIEW,
-    update(time) {
-      const fadeAll = 1 - clamp01((time - motion.duration) / 0.9);
-      let arrived = 0;
-      offsets.forEach((offset, index) => {
-        const arrive = clamp01((time - 0.5 - index * 0.22) / 0.35);
-        if (arrive > 0) arrived = index + 1;
-        const grasp = { ...miss, tip: miss.tip.clone().add(offset).add(v(0, 0.08 * (1 - ease(arrive)), 0)) };
-        const picked = index === 9 && time > pickStart;
-        showGhost(ghosts[index], grasp, (picked ? 0.85 : 0.12) * ease(arrive) * fadeAll * (picked ? 1 : 1 - clamp01((time - pickStart - 0.6) / 0.6) * 0.7));
-      });
-      applyMotion(parts, motion.at(time));
-      showMark(marks[0], miss, time > pickStart + 0.9 + 1.75 * 0.8 ? fadeAll : 0);
-      return { count: arrived, picked: time > pickStart && fadeAll > 0.5 };
-    },
-  };
-}
-
-// 10. Without the state: the same twenty samples, with the camera covered, land on twenty grasps.
+// 6. Without the state: the same twenty samples, with the camera covered, land on twenty grasps.
 export function figureSpread(makeScene) {
   const parts = buildRobotScene(makeScene());
   const data = actionData();
@@ -620,119 +391,325 @@ function noiseLandingOn(plan, strength, data, wanted, seed, avoid = new Set()) {
 export const PLAN = missAt(-0.27, 0.17);
 const BLINDFOLD_STRENGTH = 0.35;
 
-// 11. The blindfold: the plan is blurred with noise, then settles onto a real grasp on the rim.
-export function figureBlindfold(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const data = actionData();
-  const leftRim = 0; // the first grasp in the data is the pinch on the bowl's left side
-  const found = noiseLandingOn(PLAN, BLINDFOLD_STRENGTH, data, leftRim, 3);
-  const random = seededRandom(12);
-  const blurCopies = Array.from({ length: 14 }, () => normalNoise(random));
-  const planGhost = buildGhostHand(parts.scene, COLORS.ink);
-  const blurGhosts = buildGhosts(parts.scene, blurCopies.length, COLORS.noise);
-  const resultGhost = buildGhostHand(parts.scene, COLORS.accent);
-  const result = found.flow.end;
-  const motion = track(tryKeys(result, { start: 6.0, pace: 0.8, lifts: true }));
-  const duration = motion.duration + 0.8;
-  const noisy = (numbers) => decode(numbers.map((value, index) => (1 - BLINDFOLD_STRENGTH) * encode(PLAN)[index] + BLINDFOLD_STRENGTH * value));
-  return {
-    duration, still: 5.2, camera: DEFAULT_VIEW,
-    update(time) {
-      setBlindfold(parts, window01(time, 0.1, duration - 0.1, 0.9, 0.7));
-      const planShown = window01(time, 0.9, duration - 0.3, 0.6, 0.8);
-      showGhost(planGhost, PLAN, 0.5 * planShown * (1 - 0.6 * clamp01((time - 2.2) / 0.6)));
-      // Blur: copies of the plan spread out with noise, then gather as the action model removes it.
-      const blur = window01(time, 2.0, 5.1, 0.7, 0.6);
-      blurCopies.forEach((noise, index) => showGhost(blurGhosts[index], blendPose(PLAN, noisy(noise), ease(clamp01((time - 2.0) / 0.8))), 0.22 * blur));
-      const settle = ease(clamp01((time - 3.4) / 1.8));
-      const resultShown = window01(time, 3.2, duration - 0.3, 0.5, 0.8);
-      showGhost(resultGhost, alongFlow(found.flow, settle), 0.6 * resultShown, 0.3);
-      applyMotion(parts, motion.at(time));
-      return {};
-    },
-  };
+
+// ---------- More scene pieces ----------
+
+// A see-through copy of the bowl, for states the model saw in training.
+function buildFaintBowl(scene, center) {
+  const faint = buildBowl(scene);
+  faint.position.copy(center);
+  faint.traverse((mesh) => {
+    if (!mesh.material) return;
+    mesh.material = mesh.material.clone();
+    mesh.material.transparent = true;
+    mesh.material.opacity = 0;
+    mesh.material.depthWrite = false;
+    mesh.castShadow = false;
+  });
+  return faint;
+}
+function setFaint(faint, opacity) {
+  faint.visible = opacity > 0.005;
+  faint.traverse((mesh) => { if (mesh.material) mesh.material.opacity = opacity; });
 }
 
-// 12. The strength k: from close to the plan to anywhere on the table.
-export function figureStrength(makeScene) {
-  const parts = buildRobotScene(makeScene());
-  const data = actionData();
-  const strengths = [0.1, 0.3, 0.5, 0.7, 0.9];
-  const random = seededRandom(44);
-  const noises = Array.from({ length: 9 }, () => normalNoise(random));
-  const results = strengths.map((strength) => noises.map((noise) => blindfoldTry(PLAN, noise, strength, data).end));
-  const ghostSets = strengths.map(() => buildGhosts(parts.scene, noises.length, COLORS.accent));
-  const planGhost = buildGhostHand(parts.scene, COLORS.ink);
-  const hold = 1.9;
-  const duration = 0.8 + strengths.length * hold + 0.8;
-  return {
-    duration, still: 0.8 + 3.5 * hold, camera: WIDE_VIEW,
-    update(time) {
-      setBlindfold(parts, window01(time, 0.05, duration - 0.05, 0.6, 0.6));
-      applyMotion(parts, { grasp: restPose(), open: 1, hold: false });
-      showGhost(planGhost, PLAN, 0.55 * window01(time, 0.2, duration - 0.2, 0.5, 0.5));
-      let shownStrength = strengths[0];
-      strengths.forEach((strength, level) => {
-        const from = 0.8 + level * hold;
-        const shown = window01(time, from, from + hold + 0.25, 0.35, 0.35);
-        if (time >= from) shownStrength = strength;
-        results[level].forEach((grasp, index) => showGhost(ghostSets[level][index], grasp, 0.5 * shown));
-      });
-      const knobFrom = (time - 0.8) / hold;
-      const level = clamp(knobFrom, 0, strengths.length - 1);
-      const lower = Math.floor(level), upper = Math.min(strengths.length - 1, lower + 1);
-      const strengthNow = strengths[lower] + (strengths[upper] - strengths[lower]) * ease(clamp01((level - lower) * 3 - 1.8));
-      const back = ease(clamp01((time - (duration - 0.8)) / 0.7));
-      return { strength: strengthNow * (1 - back) + strengths[0] * back, shownStrength };
-    },
-  };
+// A thin tube along a path of points, drawn from its start up to `amount` (0 to 1).
+function buildTrail(scene, points, color, radius = 0.0035) {
+  const curve = new THREE.CatmullRomCurve3(points);
+  const geometry = new THREE.TubeGeometry(curve, Math.max(8, points.length * 2), radius, 6, false);
+  const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.visible = false;
+  scene.add(mesh);
+  return mesh;
+}
+function showTrail(trail, amount, opacity) {
+  const total = trail.geometry.index.count;
+  const perStep = 6 * 6;
+  trail.geometry.setDrawRange(0, Math.floor((total / perStep) * clamp01(amount)) * perStep);
+  trail.material.opacity = clamp01(opacity);
+  trail.visible = opacity > 0.005 && amount > 0.001;
 }
 
-// 13. Many new tries, one works: each try comes from the blindfold, most close on nothing, one lifts.
-export function figureManyTries(makeScene) {
+// The path the fingertips take during a timeline, as points.
+function tipPath(motion, from, to, count = 60) {
+  return Array.from({ length: count }, (_, index) => motion.at(from + ((to - from) * index) / (count - 1)).grasp.tip.clone());
+}
+
+// A label pinned to a point in the scene; the page places it over the canvas.
+const label = (text, at, opacity) => ({ text, at: at.clone(), opacity: clamp01(opacity) });
+
+// Holding the bowl still in the air at a rim pinch: the pose for one frozen picture.
+function holdingPose(center, side, height = 0.11) {
+  return lifted(rimPinch(center, side), height);
+}
+
+// ---------- The seven figures ----------
+// Every figure returns { duration, still, camera, update(time) -> overlay state }.
+// Overlay state may hold: strip (a row of tries), size and unsafe (noise), strength (k),
+// labels (text pinned to points in the scene), note (a line over the canvas), fade (0 to 1, the whole picture).
+
+const HABIT = missAt(-0.27, 0.17);
+
+// 1. Trying something different: the same miss three times, then a grasp from a new side lifts the bowl.
+export function figureTryDifferent(makeScene) {
   const parts = buildRobotScene(makeScene());
-  const data = actionData();
-  const used = new Set([0, 1, 2, 3, 4, 5]);
-  const picks = [];
-  for (let index = 0; index < 4; index += 1) {
-    const near = new Set(data.map((grasp, dataIndex) => (grasp.tip.distanceTo(PLAN.tip) > 0.16 ? dataIndex : -1)).filter((dataIndex) => dataIndex >= 0));
-    const found = noiseLandingOn(PLAN, BLINDFOLD_STRENGTH, data, null, 100 + index * 13, new Set([...used, ...near]));
-    used.add(found.flow.landing);
-    picks.push({ grasp: found.flow.end, lifts: false });
-  }
-  picks.push({ grasp: noiseLandingOn(PLAN, BLINDFOLD_STRENGTH, data, 0, 3).flow.end, lifts: true });
-  const sequence = trySequence(picks, { pace: 0.66, gap: 0.2, lead: 1.4 });
-  const previews = buildGhosts(parts.scene, picks.length, COLORS.accent);
-  const planGhost = buildGhostHand(parts.scene, COLORS.ink);
-  const marks = buildMarks(parts, picks.length);
-  const duration = sequence.end + 1.6;
+  const newSide = rimPinch(BOWL, Math.PI * 0.35);
+  const targets = [HABIT, HABIT, HABIT].map((grasp) => ({ grasp, lifts: false })).concat([{ grasp: newSide, lifts: true }]);
+  const sequence = trySequence(targets, { pace: 0.6, gap: 0.15 });
+  const marks = buildMarks(parts, 1);
+  const duration = sequence.end + 1.2;
   return {
-    duration, still: sequence.tries[4].start + 2.6 * 0.66, camera: DEFAULT_VIEW,
+    duration, still: sequence.tries[3].start + 2.6 * 0.6, camera: DEFAULT_VIEW,
     update(time) {
-      setBlindfold(parts, window01(time, 0.05, duration - 0.1, 0.9, 0.8));
-      const fadeAll = 1 - clamp01((time - sequence.end - 0.2) / 0.9);
-      showGhost(planGhost, PLAN, 0.4 * window01(time, 0.5, duration - 0.3, 0.6, 0.8));
-      sequence.tries.forEach((tryInfo, index) => {
-        // Each new grasp shows faintly just before the arm makes it.
-        showGhost(previews[index], tryInfo.grasp, 0.55 * window01(time, tryInfo.start - 0.4, tryInfo.closeAt + 0.2, 0.4, 0.3));
-        showMark(marks[index], tryInfo.grasp, !tryInfo.lifts && time > tryInfo.closeAt ? fadeAll : 0);
-      });
       applyMotion(parts, sequence.motion.at(time));
+      const fadeAll = 1 - clamp01((time - sequence.end - 0.1) / 0.9);
+      showMark(marks[0], HABIT, time > sequence.tries[0].closeAt ? fadeAll : 0);
       return { strip: sequence.tries.map((tryInfo) => ({ done: time > tryInfo.closeAt ? fadeAll : 0, works: tryInfo.lifts, current: time >= tryInfo.start && time < tryInfo.end })) };
     },
   };
 }
 
+// 2. Noise on the action: the miss sits a fixed gap (the bias) from the rim. Noise grows around the miss;
+// small noise stays at the miss, large noise drives copies into the table and the bowl, and almost none reach the rim.
+export function figureNoise(makeScene) {
+  const parts = buildRobotScene(makeScene());
+  const target = rimPinch(BOWL, Math.PI);
+  const random = seededRandom(33);
+  const copies = Array.from({ length: 28 }, () => ({ noise: normalNoise(random), lean: normalNoise(random) }));
+  const ghosts = buildGhosts(parts.scene, copies.length, COLORS.noise);
+  const habitGhost = buildGhostHand(parts.scene, COLORS.ink);
+  const targetGhost = buildGhostHand(parts.scene, COLORS.accent);
+  const gap = buildTrail(parts.scene, [HABIT.tip.clone(), HABIT.tip.clone().lerp(target.tip, 0.5), target.tip.clone()], COLORS.accent, 0.003);
+  const sizes = [0.015, 0.045, 0.17];
+  const duration = 11;
+  const stops = [[2.4, 0], [3.2, sizes[0]], [4.8, sizes[0]], [5.5, sizes[1]], [7.1, sizes[1]], [7.8, sizes[2]], [9.9, sizes[2]], [10.6, 0]];
+  const sizeAt = (time) => {
+    for (let index = 0; index < stops.length - 1; index += 1) {
+      const [from, low] = stops[index], [to, high] = stops[index + 1];
+      if (time < to) return time < from ? (index === 0 ? 0 : low) : low + (high - low) * ease((time - from) / (to - from));
+    }
+    return 0;
+  };
+  return {
+    duration, still: 8.8, camera: DEFAULT_VIEW,
+    update(time) {
+      // The arm makes its usual miss first, then waits while the copies show where noise would send it.
+      const reach = time < 2.2 ? blendPose(restPose(), HABIT, ease(clamp01((time - 0.3) / 1.4))) : blendPose(HABIT, restPose(), ease(clamp01((time - 2.2) / 0.9)));
+      const open = time < 1.7 ? 1 : time < 2.2 ? 1 - clamp01((time - 1.7) / 0.3) : clamp01((time - 2.2) / 0.3);
+      applyMotion(parts, { grasp: reach, open, hold: false });
+      const shown = window01(time, 1.6, duration - 0.1, 0.5, 0.6);
+      showGhost(habitGhost, HABIT, 0.6 * shown, 0);
+      showGhost(targetGhost, target, 0.55 * shown, 0);
+      showTrail(gap, ease(clamp01((time - 1.8) / 0.7)), 0.9 * shown);
+      const size = sizeAt(time);
+      let unsafe = 0;
+      copies.forEach((copy, index) => {
+        const tip = HABIT.tip.clone().add(v(copy.noise[0], copy.noise[1] * 0.6, copy.noise[2]).multiplyScalar(size));
+        const grasp = pose(tip, HABIT.yaw + copy.noise[3] * size * 9, copy.lean[0] * size * 3, copy.lean[1] * size * 3);
+        showGhost(ghosts[index], grasp, 1, 0);
+        const bad = fingersHit(ghosts[index]);
+        const reached = !bad && tip.distanceTo(target.tip) < 0.025;
+        if (bad && size > 0.001) unsafe += 1;
+        ghosts[index].material.color.setHex(bad ? RED : reached ? COLORS.accent : COLORS.noise);
+        showGhost(ghosts[index], grasp, shown * clamp01(size / 0.012) * (bad || reached ? 0.6 : 0.3), 0);
+      });
+      const middle = HABIT.tip.clone().lerp(target.tip, 0.5).add(v(0, 0.05, 0));
+      return { size, unsafe, labels: [label('bias', middle, shown * clamp01((time - 2.2) / 0.5))] };
+    },
+  };
+}
+
+// 3. Image models learn variety: one prompt, four different pictures that all fit it.
+// Each picture holds still; the next fades in with the bowl, the grasp and the view all changed.
+// A view from around the table: `turn` swings the camera about the table from the usual view, `rise` lifts it.
+function orbitView(turn, rise, target) {
+  const base = DEFAULT_VIEW.position.clone().sub(DEFAULT_VIEW.target);
+  const flat = Math.hypot(base.x, base.z);
+  const angle = Math.atan2(base.x, base.z) + turn;
+  return { position: target.clone().add(v(flat * Math.sin(angle), base.y + rise, flat * Math.cos(angle))), target: target.clone(), fov: 30 };
+}
+const PICTURES = [
+  { bowl: v(-0.08, 0, 0.2), side: Math.PI * 0.35, view: orbitView(0, 0, v(-0.14, 0.15, 0.0)) },
+  { bowl: v(0.1, 0, 0.12), side: Math.PI * 1.05, view: orbitView(-0.55, 0.1, v(-0.06, 0.15, -0.02)) },
+  { bowl: v(-0.26, 0, 0.12), side: Math.PI * 0.55, view: orbitView(0.45, -0.15, v(-0.16, 0.15, -0.04)) },
+  { bowl: v(-0.02, 0, 0.3), side: Math.PI * 1.45, view: orbitView(-0.2, 0.35, v(-0.1, 0.12, 0.04)) },
+];
+export function figureImageModel(makeScene) {
+  const parts = buildRobotScene(makeScene());
+  const hold = 2.6, fadeTime = 0.45;
+  const duration = PICTURES.length * hold;
+  const camera = { position: PICTURES[0].view.position.clone(), target: PICTURES[0].view.target.clone(), fov: PICTURES[0].view.fov };
+  return {
+    duration, still: 0.5 * hold, camera,
+    update(time) {
+      const index = Math.min(PICTURES.length - 1, Math.floor(time / hold));
+      const local = time - index * hold;
+      const picture = PICTURES[index];
+      parts.bowlHome = picture.bowl.clone();
+      const grasp = holdingPose(picture.bowl, picture.side);
+      applyMotion(parts, { grasp, open: 0, hold: true, holdFrom: rimPinch(picture.bowl, picture.side) });
+      // A slow drift keeps each picture alive without moving anything in it.
+      const drift = (local / hold - 0.5) * 0.04;
+      camera.position.copy(picture.view.position).add(v(drift, 0, -drift));
+      camera.target.copy(picture.view.target);
+      camera.fov = picture.view.fov;
+      const fade = Math.min(ease(clamp01(local / fadeTime)), ease(clamp01((hold - local) / fadeTime)));
+      return { fade, note: `picture ${index + 1} of many` };
+    },
+  };
+}
+
+// 4. Policies don't have to: camera pictures that are nearly the same, the bowl a little off each time,
+// and each with exactly one grasp, the same kind every time. Earlier states stay faint.
+const NEAR_STATES = [v(-0.08, 0, 0.2), v(-0.062, 0, 0.214), v(-0.097, 0, 0.188), v(-0.068, 0, 0.18), v(-0.091, 0, 0.219)];
+export function figurePolicyImages(makeScene) {
+  const parts = buildRobotScene(makeScene());
+  const side = Math.PI * 1.25;
+  const pace = 0.62;
+  const runs = NEAR_STATES.map((center, index) => {
+    const target = rimPinch(center, side + (index - 2) * 0.03);
+    const motion = track(tryKeys(target, { lifts: true, pace }));
+    return { center, target, motion, trail: null, faint: buildFaintBowl(parts.scene, center) };
+  });
+  const each = runs[0].motion.duration + 0.25;
+  runs.forEach((run) => { run.trail = buildTrail(parts.scene, tipPath(run.motion, 0.6 * pace, 2.35 * pace), COLORS.ink, 0.0045); });
+  const duration = runs.length * each + 1.0;
+  return {
+    duration, still: 2 * each + 1.9 * pace, camera: DEFAULT_VIEW,
+    update(time) {
+      const index = Math.min(runs.length - 1, Math.floor(time / each));
+      const local = time - index * each;
+      const fadeAll = 1 - clamp01((time - runs.length * each) / 0.8);
+      const run = runs[index];
+      // The bowl slides the few millimeters to this state while the arm is at rest.
+      const previous = runs[(index + runs.length - 1) % runs.length].center;
+      parts.bowlHome = previous.clone().lerp(run.center, ease(clamp01(local / 0.4)));
+      applyMotion(parts, time < runs.length * each ? run.motion.at(local) : { grasp: restPose(), open: 1, hold: false });
+      runs.forEach((other, otherIndex) => {
+        const drawn = otherIndex < index ? 1 : otherIndex === index ? clamp01((local - 0.6 * pace) / (1.75 * pace)) : 0;
+        showTrail(other.trail, drawn, (otherIndex === index ? 0.85 : 0.3) * fadeAll);
+        setFaint(other.faint, otherIndex < index ? 0.16 * fadeAll : 0);
+      });
+      return { note: `picture ${index + 1}: one action` };
+    },
+  };
+}
+
+// 5. The information theory, in the scene: in a training state, twenty samples fly straight to the one recorded grasp.
+// Then the bowl moves to a state between two training states, and all twenty land on one blended grasp beside it.
+const SEEN_LEFT = v(-0.3, 0, 0.04), SEEN_RIGHT = v(0.14, 0, 0.04);
+export function figureCollapse(makeScene) {
+  const parts = buildRobotScene(makeScene(), { bowlAt: SEEN_LEFT });
+  const data = actionData();
+  const samples = twentyNoises(data);
+  const recorded = rimPinch(SEEN_LEFT, Math.PI);
+  const blended = blendPose(rimPinch(SEEN_LEFT, Math.PI), rimPinch(SEEN_RIGHT, Math.PI), 0.5);
+  const ghosts = buildGhosts(parts.scene, samples.length, COLORS.ink);
+  const faintLeft = buildFaintBowl(parts.scene, SEEN_LEFT), faintRight = buildFaintBowl(parts.scene, SEEN_RIGHT);
+  const marks = buildMarks(parts, 1);
+  const secondStart = 6.4;
+  const motion = track(tryKeys(blended, { start: secondStart + 4.4, pace: 0.7 }));
+  const duration = motion.duration + 1.0;
+  const flyTo = (time, start, grasp) => {
+    const amount = ease(clamp01((time - start - 0.9) / 2.2));
+    const shown = window01(time, start, start + 5.2, 0.6, 0.7);
+    samples.forEach((sample, index) => showGhost(ghosts[index], blendPose(noisePose(sample.noise, sample.lean, 1), grasp, amount), shown * (0.2 + 0.32 * amount)));
+    return amount;
+  };
+  return {
+    duration, still: secondStart + 3.4, camera: DEFAULT_VIEW,
+    update(time) {
+      const fadeAll = 1 - clamp01((time - motion.duration) / 0.9);
+      // The bowl slides from the training state to the new one between the two seen states.
+      const slide = ease(clamp01((time - (secondStart - 1.0)) / 1.2)) * (1 - ease(clamp01((time - (duration - 1.0)) / 0.9)));
+      parts.bowlHome = SEEN_LEFT.clone().lerp(BOWL, slide);
+      if (time < secondStart) flyTo(time, 0.2, recorded);
+      else flyTo(time, secondStart, blended);
+      const seen = window01(time, secondStart - 0.6, duration - 0.2, 0.7, 0.8);
+      setFaint(faintLeft, 0.3 * seen);
+      setFaint(faintRight, 0.3 * seen);
+      applyMotion(parts, motion.at(time));
+      showMark(marks[0], blended, time > motion.duration - 1.6 ? fadeAll : 0);
+      const labels = [];
+      if (time < secondStart) labels.push(label('training state', SEEN_LEFT.clone().add(v(0, 0.13, 0)), window01(time, 0.3, secondStart - 1.1, 0.5, 0.4)));
+      else {
+        labels.push(label('seen', SEEN_LEFT.clone().add(v(0, 0.11, 0)), seen), label('seen', SEEN_RIGHT.clone().add(v(0, 0.11, 0)), seen));
+        labels.push(label('new state', BOWL.clone().add(v(0, 0.13, 0)), seen));
+      }
+      return { labels };
+    },
+  };
+}
+
+// 7. The dial: the blindfold noises the plan by k and the action model settles it onto a valid grasp;
+// larger k lands further away. Then a run of new tries near the plan, until one lifts the bowl.
+export function figureDial(makeScene) {
+  const parts = buildRobotScene(makeScene());
+  const data = actionData();
+  const strengths = [0.1, 0.3, 0.5, 0.7, 0.9];
+  const random = seededRandom(44);
+  const noises = Array.from({ length: 9 }, () => normalNoise(random));
+  const levels = strengths.map((strength) => noises.map((noise) => blindfoldTry(PLAN, noise, strength, data)));
+  const ghostSets = strengths.map(() => buildGhosts(parts.scene, noises.length, COLORS.accent));
+  const planGhost = buildGhostHand(parts.scene, COLORS.ink);
+  const blurGhosts = buildGhosts(parts.scene, noises.length, COLORS.noise);
+  const hold = 2.0;
+  const dialEnd = 1.0 + strengths.length * hold;
+  // The tries: four near the plan that close on nothing, then one on the rim that lifts.
+  const used = new Set([0, 1, 2, 3, 4, 5]);
+  const picks = [];
+  for (let index = 0; index < 4; index += 1) {
+    const far = new Set(data.map((grasp, dataIndex) => (grasp.tip.distanceTo(PLAN.tip) > 0.16 ? dataIndex : -1)).filter((dataIndex) => dataIndex >= 0));
+    const found = noiseLandingOn(PLAN, BLINDFOLD_STRENGTH, data, null, 100 + index * 13, new Set([...used, ...far]));
+    used.add(found.flow.landing);
+    picks.push({ grasp: found.flow.end, lifts: false });
+  }
+  picks.push({ grasp: noiseLandingOn(PLAN, BLINDFOLD_STRENGTH, data, 0, 3).flow.end, lifts: true });
+  const pace = 0.62;
+  const tries = trySequence(picks, { pace, gap: 0.15, lead: dialEnd + 0.6 });
+  const previews = buildGhosts(parts.scene, picks.length, COLORS.accent);
+  const marks = buildMarks(parts, picks.length);
+  const duration = tries.end + 1.4;
+  const noisyPlan = (noise, strength) => decode(encode(PLAN).map((value, index) => (1 - strength) * value + strength * noise[index]));
+  return {
+    duration, still: 1.0 + 2.7 * hold, camera: WIDE_VIEW,
+    update(time) {
+      setBlindfold(parts, window01(time, 0.05, duration - 0.1, 0.8, 0.8));
+      const fadeAll = 1 - clamp01((time - tries.end - 0.2) / 0.9);
+      showGhost(planGhost, PLAN, 0.5 * window01(time, 0.3, duration - 0.3, 0.6, 0.8));
+      const level = clamp(Math.floor((time - 1.0) / hold), 0, strengths.length - 1);
+      const local = time - 1.0 - level * hold;
+      const inDial = time > 1.0 && time < dialEnd;
+      // Within each step: the plan blurs by k, then each blurred copy follows the action model to a valid grasp.
+      const blur = inDial ? window01(local, 0, 1.3, 0.3, 0.35) : 0;
+      const settle = ease(clamp01((local - 0.6) / 0.9));
+      noises.forEach((noise, index) => showGhost(blurGhosts[index], blendPose(PLAN, noisyPlan(noise, strengths[level]), ease(clamp01(local / 0.75))), 0.2 * blur));
+      strengths.forEach((strength, levelIndex) => {
+        const shown = inDial && levelIndex === level ? window01(local, 0.55, hold + 0.05, 0.3, 0.3) : 0;
+        levels[levelIndex].forEach((flow, index) => showGhost(ghostSets[levelIndex][index], alongFlow(flow, settle), 0.5 * shown));
+      });
+      tries.tries.forEach((tryInfo, index) => {
+        showGhost(previews[index], tryInfo.grasp, 0.55 * window01(time, tryInfo.start - 0.4, tryInfo.closeAt + 0.2, 0.4, 0.3));
+        showMark(marks[index], tryInfo.grasp, !tryInfo.lifts && time > tryInfo.closeAt ? fadeAll : 0);
+      });
+      applyMotion(parts, tries.motion.at(time));
+      const strength = time < 1.0 ? strengths[0] : time < dialEnd ? strengths[level] : BLINDFOLD_STRENGTH;
+      return {
+        strength,
+        strip: tries.tries.map((tryInfo) => ({ done: time > tryInfo.closeAt ? fadeAll : 0, works: tryInfo.lifts, current: time >= tryInfo.start && time < tryInfo.end })),
+        labels: [label('plan', PLAN.tip.clone().add(v(0, 0.16, 0)), window01(time, 0.6, dialEnd, 0.5, 0.5))],
+      };
+    },
+  };
+}
+
 export const FIGURES = {
-  'one-success': figureOneSuccess,
-  'three-tries': figureThreeTries,
-  'one-action': figureOneAction,
-  'blend': figureBlend,
-  'gaussian': figureGaussian,
-  'steering': figureSteering,
-  'best-of': figureBestOf,
+  'try-different': figureTryDifferent,
+  'noise': figureNoise,
+  'image-model': figureImageModel,
+  'policy-images': figurePolicyImages,
+  'collapse': figureCollapse,
   'spread': figureSpread,
-  'blindfold': figureBlindfold,
-  'strength': figureStrength,
-  'many-tries': figureManyTries,
+  'dial': figureDial,
 };
