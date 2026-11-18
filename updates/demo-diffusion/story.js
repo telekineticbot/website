@@ -242,8 +242,11 @@ function start(stageElement, mode) {
   // Each step returns what the scene should look like at progress (0 to 1).
   const sideShot = [v(0.05, 1.35, 1.8), v(0, 0.2, 0)];
   const missEnd = demoPath.graspAt + 0.06;
-  const limitsShot = [v(-0.02, 1.3, 1.75), v(-0.05, 0.15, 0.1)];
-  const limitsCloseShot = [v(-0.22, 0.95, 1.25), v(-0.24, 0.08, 0.16)];
+  // The limitations shots sit a little further back than their raw numbers, so the table reads as a whole.
+  const LIMITS_PULL_BACK = 1.15;
+  const pulledBack = ([position, target]) => [target.clone().addScaledVector(position.clone().sub(target), LIMITS_PULL_BACK), target];
+  const limitsShot = pulledBack([v(-0.02, 1.3, 1.75), v(-0.05, 0.15, 0.1)]);
+  const limitsCloseShot = pulledBack([v(-0.22, 0.95, 1.25), v(-0.24, 0.08, 0.16)]);
   const finalMainShot = [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)];
 
   const steps = [
@@ -483,13 +486,16 @@ function start(stageElement, mode) {
 
   // Pacing: each step's animation plays first with no text on screen. Only when it has finished does
   // the text fade and slide in to explain it. As the next step's animation starts, that text fades out.
-  const ANIMATION_SHARE = 0.55;
-  const TEXT_IN_START = 0.6;
-  const TEXT_IN_LENGTH = 0.15;
-  const TEXT_OUT_LENGTH = 0.2;
+  const ANIMATION_SHARE = 0.62;
+  // Steps with no text play their animation over almost their whole length.
+  const SILENT_ANIMATION_SHARE = 0.9;
+  const TEXT_IN_START = 0.66;
+  const TEXT_IN_LENGTH = 0.12;
+  const TEXT_OUT_LENGTH = 0.15;
   const TEXT_SLIDE_PIXELS = 24;
-  function animationProgress(stepProgress) {
-    return clamp01(stepProgress / ANIMATION_SHARE);
+  function animationProgress(stepProgress, stepIndex) {
+    const silent = stepElements[stepIndex]?.classList.contains('step-silent');
+    return clamp01(stepProgress / (silent ? SILENT_ANIMATION_SHARE : ANIMATION_SHARE));
   }
   function updateStepText(position) {
     const viewportHeight = window.innerHeight;
@@ -640,7 +646,7 @@ function start(stageElement, mode) {
 
   // The timed loop: the person's demo, the bowl moves, noise, cleanup, the robot does it.
   // Each entry is [step index, seconds].
-  const LOOP_STEPS = [[1, 4.2], [2, 2.2], [4, 1.8], [5, 2.4], [6, 4.2]];
+  const LOOP_STEPS = [[1, 6.3], [2, 3.3], [4, 2.7], [5, 3.6], [6, 6.3]];
   const LOOP_SECONDS = LOOP_STEPS.reduce((total, [, seconds]) => total + seconds, 0);
   const LOOP_FADE_SECONDS = 0.45;
   let loopSeconds = 0;
@@ -671,7 +677,7 @@ function start(stageElement, mode) {
       markActiveStep(position.stepIndex);
       updateStepText(position);
       updateDim();
-      position = { stepIndex: position.stepIndex, progress: animationProgress(position.progress) };
+      position = { stepIndex: position.stepIndex, progress: animationProgress(position.progress, position.stepIndex) };
     }
     const damping = prefersReducedMotion.matches ? 1 : 1 - Math.exp(-elapsedSeconds * 9);
     const stepIndex = Math.min(position.stepIndex, steps.length - 1);

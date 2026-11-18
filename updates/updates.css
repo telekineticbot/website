@@ -55,11 +55,11 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .no-webgl .stage-fallback { display: grid; }
 .steps { position: relative; margin-top: calc(var(--header-height, 72px) - 100vh); margin-top: calc(var(--header-height, 72px) - 100svh); z-index: 2; pointer-events: none; }
 /* Each step is a stretch of scroll. Its animation plays first; then its text fades in near the top left and holds. */
-.step { min-height: 140vh; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
+.step { min-height: 220vh; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
 /* A step before a run of cards gets room to finish, and its text leaves as the first card comes in. */
-.step:has(+ .card-flow) { min-height: 210vh; }
+.step:has(+ .card-flow) { min-height: 300vh; }
 /* Steps with no text, where only the animation moves. */
-.step-silent { min-height: 110vh; }
+.step-silent { min-height: 140vh; }
 /* Once the story script runs, it places the text over the scene and fades it in and out with the scroll. */
 .paced .step .card { position: fixed; top: 22vh; left: max(20px, calc((100vw - 1120px) / 2 + 20px)); opacity: 0; visibility: hidden; transition: none; will-change: opacity, transform; }
 /* Results: two cards slide up over the stage, which blurs and darkens behind them. */
@@ -70,7 +70,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 /* After the last card, leave a screen of scroll so it slides fully out and the blur lifts before the stage lets go. */
 .steps > .card-flow:last-child { padding-bottom: 100vh; }
 /* The chart holds longer: its bars grow only once it has settled. */
-.card-slot:has(.chart) { min-height: 190vh; }
+.card-slot:has(.chart) { min-height: 220vh; }
 .card-slot > .result-card { position: sticky; top: 12vh; }
 /* No box: the content sits straight on the blurred, darkened animation, in light type. */
 .result-card { --on-dim: #f6f5f1; --on-dim-soft: #f6f5f1b8; --on-dim-faint: #f6f5f12e; color: var(--on-dim); display: grid; gap: 20px; }
