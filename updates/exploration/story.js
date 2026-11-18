@@ -6,27 +6,17 @@ import * as THREE from 'three';
 import {
   COLORS, HOME, buildStudio, buildTable, buildSink, buildBowl, buildArm,
   poseArm, makePath, makeTube, setTubeDrawn, seededRandom, v, clamp01, ease,
+  EXPLORE_BOWL as BOWL, GRASP_HEIGHT, GRIP_ON_BOWL, HAND_TURN, BLINDFOLD_LIFT,
+  buildRobotCamera, buildGhostHand, rimGrasp, poseGhost,
 } from './scene-parts.js';
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-// Layout on the same counter as the DemoDiffusion post.
-// The task: pick up the bowl.
-const BOWL = v(-0.08, 0, 0.2);
-// Where the gripper tip sits when it closes on the bowl, and how far the fingers close,
-// as in the DemoDiffusion post.
-const GRASP_HEIGHT = 0.075;
-const GRIP_ON_BOWL = 0.25;
+// Layout on the same counter as the DemoDiffusion post. The task: pick up the bowl.
 // The robot's own move comes down beside the bowl, to its left, and closes on nothing.
 const HABIT_GRASP = v(BOWL.x - 0.2, 0, BOWL.z);
-// The hand is turned a quarter turn from the DemoDiffusion post, so the fingers close side to side.
-const HAND_TURN = Math.PI / 2;
-// The robot's camera, on a post at the back left of the counter, looking at the table.
-const CAMERA_POST = v(-0.64, 0, -0.36);
-const CAMERA_HEIGHT = 0.36;
-const CAMERA_LOOKS_AT = v(-0.12, 0.04, 0.16);
-// How far above the camera the blindfold box starts before it is lowered over it.
-const BLINDFOLD_LIFT = 0.42;
+// The faint copies of the gripper in the exploring step.
+const GHOST_OPACITY = 0.3;
 
 const storyStage = document.querySelector('.story .stage');
 if (storyStage) start(storyStage, 'scroll');
@@ -140,13 +130,11 @@ function start(stageElement, mode) {
   const habitTube = makeTube(scene, habitPath.curve, COLORS.ink, 0.006);
   const wiggleTubes = wigglePaths.map((path) => makeTube(scene, path.curve, COLORS.ink, 0.0035, 0.55));
   const planTubes = plans.map((path) => makeTube(scene, path.curve, COLORS.ink, 0.0055));
-  // Ways it could go: faint paths that fan out from the hand while it stops to think.
-  const ghostEnds = [v(-0.3, 0.12, 0.3), v(-0.14, 0.08, 0.42), v(0.06, 0.08, 0.46), v(0.24, 0.1, 0.36), v(0.32, 0.14, 0.12)];
-  const ghostTubes = ghostEnds.map((end) => {
-    const middle = HOME.clone().lerp(end, 0.5).add(v(0, 0.12, 0));
-    return makeTube(scene, makePath([HOME, middle, end], { grasp: 1, release: 2 }).curve, COLORS.ink, 0.0035, 0.5);
-  });
-  const allTubes = [habitTube, ...wiggleTubes, ...planTubes, ...ghostTubes];
+  // Ways it could go: faint copies of the gripper, each closing on the bowl's rim from a different side.
+  // [side of the bowl, lean away from straight down], in radians.
+  const GHOST_GRASPS = [[Math.PI * 0.8, 0.6], [Math.PI * 0.42, 0.3], [Math.PI * 0.05, 0.7], [-Math.PI * 0.35, 0.15]];
+  const ghostHands = GHOST_GRASPS.map(([side, tilt]) => ({ ...buildGhostHand(scene), grasp: rimGrasp(BOWL, side, tilt) }));
+  const allTubes = [habitTube, ...wiggleTubes, ...planTubes];
   const inkColor = new THREE.Color(COLORS.ink);
   const accentColor = new THREE.Color(COLORS.accent);
 
@@ -163,10 +151,11 @@ function start(stageElement, mode) {
   const dotOffsets = [];
   const dotRandom = seededRandom(7);
   for (let index = 0; index < DOT_COUNT; index += 1) {
-    dotOffsets.push(v(dotRandom() * 2 - 1, dotRandom() * 2 - 1, dotRandom() * 2 - 1).normalize().multiplyScalar(0.35 + dotRandom() * 0.65));
+    dotOffsets.push(v(dotRandom() * 2 - 1, (dotRandom() * 2 - 1) * 0.6, dotRandom() * 2 - 1).normalize().multiplyScalar(0.3 + dotRandom() * 0.7));
   }
   const dotMatrix = new THREE.Matrix4();
-  const ROUGH_SPREAD = 0.11;
+  // Heavy noise: the plan is scattered across most of the table before the model cleans it up.
+  const ROUGH_SPREAD = 0.34;
 
   // ---------- One try ----------
   // The hand pauses where it closes, so the fingers visibly close before it lifts.
@@ -212,7 +201,8 @@ function start(stageElement, mode) {
   // ---------- Shots ----------
   const introShot = (progress) => [v(0.42 - progress * 0.4, 1.25, 1.9), v(-0.14, 0.17, 0)];
   const mainShot = [v(0.02, 1.32, 1.82), v(-0.14, 0.17, 0.02)];
-  const wideShot = [v(-0.06, 1.5, 2.1), v(-0.16, 0.22, -0.04)];
+  // Close on the bowl, so the copies of the gripper on its rim are easy to read.
+  const ghostShot = [v(-0.02, 1.02, 1.42), v(-0.08, 0.14, 0.08)];
   // Close on the bowl and the wrong spot beside it.
   const clusterShot = [v(-0.12, 0.98, 1.42), v(-0.2, 0.06, 0.2)];
   // Close on the robot's camera, so the blindfold going on is easy to see.
@@ -243,29 +233,25 @@ function start(stageElement, mode) {
         camera: mainShot,
       };
     },
-    // 2. It has to explore to find a way: the hand stops and looks around, and faint paths fan out
-    // from it toward other ways it could go. The camera pulls back over the whole table.
+    // 2. It has to explore to find a way: the hand stops, and faint copies of the gripper appear one
+    // after another, each trying the bowl's rim from a different side. The camera pulls back a little.
     (progress) => ({
       gripperTip: HOME.clone().add(v(0.05 * Math.sin(progress * Math.PI * 2), 0.015 * Math.sin(progress * Math.PI * 4), 0)),
       rings: habitMiss,
-      tubes: [
-        [habitTube, 1, 1 - 0.5 * ease(clamp01(progress / 0.3))],
-        ...ghostTubes.map((tube, index) => [tube, ease(clamp01((progress - 0.15 - index * 0.1) / 0.35)), 1]),
-      ],
-      camera: lerpShot(mainShot, wideShot, ease(clamp01(progress / 0.6))),
+      ringFade: 1 - ease(clamp01(progress / 0.15)),
+      ghosts: ghostHands.map((ghost, index) => ease(clamp01((progress - 0.12 - index * 0.16) / 0.22))),
+      tubes: [[habitTube, 1, 1 - 0.65 * ease(clamp01(progress / 0.3))]],
+      camera: lerpShot(mainShot, ghostShot, ease(clamp01(progress / 0.5))),
     }),
     // 3. Most methods wiggle around: the same move, with a little random jitter, twice.
     (progress) => {
       const run = tryRun(wigglePaths.slice(0, FIRST_WIGGLES), progress);
       return {
         ...run.current,
-        rings: [...habitMiss, ...run.misses],
-        tubes: [
-          [habitTube, 1, 0.35],
-          ...ghostTubes.map((tube) => [tube, 1, 1 - ease(clamp01(progress / 0.15))]),
-          ...wiggleTubesUpTo(run.index, run.current.motion),
-        ],
-        camera: lerpShot(wideShot, mainShot, ease(clamp01(progress / 0.3))),
+        rings: run.misses,
+        ghosts: ghostHands.map(() => 1 - ease(clamp01(progress / 0.12))),
+        tubes: [[habitTube, 1, 0.35], ...wiggleTubesUpTo(run.index, run.current.motion)],
+        camera: lerpShot(ghostShot, mainShot, ease(clamp01(progress / 0.3))),
       };
     },
     // 4. Wiggling rarely finds anything new: the rest of the wiggles, faster, all closing on nothing
@@ -274,7 +260,7 @@ function start(stageElement, mode) {
       const run = tryRun(wigglePaths.slice(FIRST_WIGGLES), clamp01(progress / 0.78));
       return {
         ...run.current,
-        rings: [...habitMiss, ...wiggleMisses.slice(0, FIRST_WIGGLES), ...run.misses],
+        rings: [...wiggleMisses.slice(0, FIRST_WIGGLES), ...run.misses],
         tubes: [[habitTube, 1, 0.35], ...wiggleTubesUpTo(run.index + FIRST_WIGGLES, run.current.motion)],
         camera: lerpShot(mainShot, clusterShot, ease(clamp01((progress - 0.55) / 0.45))),
       };
@@ -290,7 +276,7 @@ function start(stageElement, mode) {
       const backToTable = ease(clamp01((progress - 0.58) / 0.3));
       return {
         gripperTip: HOME,
-        rings: clearing < 1 ? [...habitMiss, ...wiggleMisses] : [],
+        rings: clearing < 1 ? wiggleMisses : [],
         ringFade: 1 - clearing,
         blind,
         tubes: [
@@ -440,6 +426,15 @@ function start(stageElement, mode) {
       if (ring.visible) ring.position.set(landings[index].x, 0.003, landings[index].z);
     });
 
+    const ghostAmounts = state.ghosts ?? [];
+    ghostHands.forEach((ghost, index) => {
+      const amount = ghostAmounts[index] ?? 0;
+      ghost.group.visible = amount > 0.01;
+      ghost.material.opacity = GHOST_OPACITY * amount;
+      // Each copy slides the last few centimetres in onto the rim as it appears.
+      poseGhost(ghost, ghost.grasp, 0.08 * (1 - amount));
+    });
+
     const blind = state.blind ?? 0;
     robotCamera.blindfold.visible = blind > 0;
     robotCamera.blindfold.position.y = BLINDFOLD_LIFT * (1 - blind);
@@ -568,45 +563,4 @@ function start(stageElement, mode) {
   shown.cameraPosition.copy(steps[first](0).camera[0]);
   applyState(steps[first](0), 1);
   requestAnimationFrame(frame);
-}
-
-// The robot's camera: a small dark camera on a post, looking at the table.
-// The blindfold is a box that is lowered over it.
-function buildRobotCamera(scene) {
-  const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a25, roughness: 0.45 });
-  const postMaterial = new THREE.MeshStandardMaterial({ color: 0xc9cbc6, roughness: 0.18, metalness: 0.9 });
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.013, CAMERA_HEIGHT, 20), postMaterial);
-  post.position.set(CAMERA_POST.x, CAMERA_HEIGHT / 2, CAMERA_POST.z);
-  post.castShadow = true;
-  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.012, 28), postMaterial);
-  foot.position.set(CAMERA_POST.x, 0.006, CAMERA_POST.z);
-  foot.castShadow = true;
-  scene.add(post, foot);
-
-  const head = new THREE.Group();
-  head.position.set(CAMERA_POST.x, CAMERA_HEIGHT + 0.03, CAMERA_POST.z);
-  head.lookAt(CAMERA_LOOKS_AT);
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.062, 0.07), darkMaterial);
-  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.034, 28), darkMaterial);
-  lens.rotation.x = Math.PI / 2;
-  lens.position.z = 0.05;
-  const glass = new THREE.Mesh(
-    new THREE.CircleGeometry(0.019, 28),
-    new THREE.MeshStandardMaterial({ color: 0x3a4658, roughness: 0.05, metalness: 0.8 }),
-  );
-  glass.position.z = 0.0675;
-  for (const mesh of [body, lens]) mesh.castShadow = true;
-  head.add(body, lens, glass);
-
-  // The blindfold: a box that covers the whole camera, lens included.
-  const blindfold = new THREE.Mesh(
-    new THREE.BoxGeometry(0.14, 0.1, 0.18),
-    new THREE.MeshStandardMaterial({ color: COLORS.accent, roughness: 0.6 }),
-  );
-  blindfold.position.set(0, BLINDFOLD_LIFT, 0.015);
-  blindfold.castShadow = true;
-  blindfold.visible = false;
-  head.add(blindfold);
-  scene.add(head);
-  return { head, blindfold };
 }

@@ -298,6 +298,115 @@ export function placeBetween(mesh, fromPoint, toPoint) {
   mesh.quaternion.setFromUnitVectors(v(0, 1, 0), direction.normalize());
 }
 
+
+// ---------- The exploration post's scene ----------
+// The task: pick up the bowl.
+export const EXPLORE_BOWL = v(-0.08, 0, 0.2);
+// Where the gripper tip sits when it closes on the bowl, and how far the fingers close.
+export const GRASP_HEIGHT = 0.075;
+export const GRIP_ON_BOWL = 0.25;
+// The hand is turned a quarter turn from the DemoDiffusion post, so the fingers close side to side.
+export const HAND_TURN = Math.PI / 2;
+export const BOWL_RIM_RADIUS = 0.085;
+// The robot's camera, on a post at the back left of the counter, looking at the table.
+export const CAMERA_POST = v(-0.64, 0, -0.36);
+export const CAMERA_HEIGHT = 0.36;
+export const CAMERA_LOOKS_AT = v(-0.12, 0.04, 0.16);
+// How far above the camera the blindfold box starts before it is lowered over it.
+export const BLINDFOLD_LIFT = 0.42;
+
+// A faint copy of the gripper: a hand, two fingers and a short length of wrist,
+// which shows the direction the copy came in from.
+export function buildGhostHand(scene, color = COLORS.ink) {
+  const material = new THREE.MeshStandardMaterial({ color, roughness: 0.5, transparent: true, opacity: 0, depthWrite: false });
+  const group = new THREE.Group();
+  const hand = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.035, 0.05), material);
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.12, 20), material);
+  wrist.position.y = 0.0775;
+  const fingers = [-1, 1].map((sideSign) => {
+    const finger = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.07, 0.032), material);
+    finger.userData.sideSign = sideSign;
+    group.add(finger);
+    return finger;
+  });
+  group.add(hand, wrist);
+  group.visible = false;
+  scene.add(group);
+  const ghost = { group, material, fingers };
+  setGhostOpen(ghost, 0.3);
+  return ghost;
+}
+
+export function setGhostOpen(ghost, open) {
+  for (const finger of ghost.fingers) finger.position.set(finger.userData.sideSign * (0.03 + 0.05 * open), -0.045, 0);
+}
+
+// A grasp that pinches the bowl's rim on one side: one finger inside the wall, one outside,
+// leaning out by `tilt` (radians) so each grasp comes at the bowl from a different angle.
+export function rimGrasp(bowlCenter, side, tilt) {
+  const outward = v(Math.cos(side), 0, Math.sin(side));
+  const up = v(0, 1, 0).multiplyScalar(Math.cos(tilt)).addScaledVector(outward, Math.sin(tilt));
+  const fingerAxis = outward.clone().multiplyScalar(Math.cos(tilt)).addScaledVector(v(0, 1, 0), -Math.sin(tilt));
+  const tip = bowlCenter.clone().addScaledVector(outward, BOWL_RIM_RADIUS).setY(0.055);
+  return { tip, up, fingerAxis, reach: 0.08 };
+}
+
+// The grasp the arm itself makes with its tip at `tip`: pointing straight down and turned
+// the way the arm turns its hand.
+export function armGrasp(tip) {
+  const towardTip = v(tip.x - ARM_BASE.x, 0, tip.z - ARM_BASE.z).normalize();
+  const turn = Math.atan2(towardTip.x, towardTip.z) + Math.PI / 2 + HAND_TURN;
+  return { tip: tip.clone(), up: v(0, 1, 0), fingerAxis: v(Math.cos(turn), 0, -Math.sin(turn)), reach: GRIPPER_LENGTH * 0.55 };
+}
+
+// Put a ghost at a grasp, `lift` meters back along the direction it came in from.
+export function poseGhost(ghost, grasp, lift = 0) {
+  const side = grasp.fingerAxis.clone().cross(grasp.up);
+  ghost.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(grasp.fingerAxis, grasp.up, side));
+  ghost.group.position.copy(grasp.tip).addScaledVector(grasp.up, grasp.reach + lift);
+}
+
+// The robot's camera: a small dark camera on a post, looking at the table.
+// The blindfold is a box that is lowered over it.
+export function buildRobotCamera(scene) {
+  const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a25, roughness: 0.45 });
+  const postMaterial = new THREE.MeshStandardMaterial({ color: 0xc9cbc6, roughness: 0.18, metalness: 0.9 });
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.013, CAMERA_HEIGHT, 20), postMaterial);
+  post.position.set(CAMERA_POST.x, CAMERA_HEIGHT / 2, CAMERA_POST.z);
+  post.castShadow = true;
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.012, 28), postMaterial);
+  foot.position.set(CAMERA_POST.x, 0.006, CAMERA_POST.z);
+  foot.castShadow = true;
+  scene.add(post, foot);
+
+  const head = new THREE.Group();
+  head.position.set(CAMERA_POST.x, CAMERA_HEIGHT + 0.03, CAMERA_POST.z);
+  head.lookAt(CAMERA_LOOKS_AT);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.062, 0.07), darkMaterial);
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.034, 28), darkMaterial);
+  lens.rotation.x = Math.PI / 2;
+  lens.position.z = 0.05;
+  const glass = new THREE.Mesh(
+    new THREE.CircleGeometry(0.019, 28),
+    new THREE.MeshStandardMaterial({ color: 0x3a4658, roughness: 0.05, metalness: 0.8 }),
+  );
+  glass.position.z = 0.0675;
+  for (const mesh of [body, lens]) mesh.castShadow = true;
+  head.add(body, lens, glass);
+
+  // The blindfold: a box that covers the whole camera, lens included.
+  const blindfold = new THREE.Mesh(
+    new THREE.BoxGeometry(0.14, 0.1, 0.18),
+    new THREE.MeshStandardMaterial({ color: COLORS.accent, roughness: 0.6 }),
+  );
+  blindfold.position.set(0, BLINDFOLD_LIFT, 0.015);
+  blindfold.castShadow = true;
+  blindfold.visible = false;
+  head.add(blindfold);
+  scene.add(head);
+  return { head, blindfold };
+}
+
 // ---------- Paths ----------
 
 export function makePath(points, markers) {
