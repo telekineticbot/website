@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import {
   COLORS, BOWL_START, HOME, buildStudio, buildTable, buildSink, buildBowl, buildArm,
-  poseArm, makePath, makeTube, setTubeDrawn, gripOpenAlong, seededRandom, v, clamp01, ease,
+  poseArm, makePath, makeTube, setTubeDrawn, seededRandom, v, clamp01, ease,
 } from './scene-parts.js';
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -18,8 +18,12 @@ const BOWL = BOWL_START.clone();
 const ORANGE_IN_BOWL = v(BOWL.x, 0.038, BOWL.z);
 // While the robot holds the orange, the orange sits between the lower ends of its fingers.
 const ORANGE_ABOVE_GRIPPER_TIP = 0.012;
-// The robot's own move falls short: it sets the orange down well short of the bowl.
-const HABIT_DROP = v(-0.1, 0, 0.16);
+// How far the fingers close on the orange: just touching it.
+const GRIP_ON_ORANGE = 0.19;
+// The robot's own move comes down beside the orange, to its left, and closes on nothing.
+const HABIT_GRASP = v(ORANGE_START.x - 0.13, ORANGE_START.y, ORANGE_START.z);
+// The hand is turned a quarter turn from the DemoDiffusion post, so the fingers close side to side.
+const HAND_TURN = Math.PI / 2;
 // The robot's camera, on a post at the back left of the counter, looking at the table.
 const CAMERA_POST = v(-0.64, 0, -0.36);
 const CAMERA_HEIGHT = 0.36;
@@ -70,10 +74,10 @@ function start(stageElement, mode) {
   // The robot's camera, and the box that goes over it as a blindfold.
   const robotCamera = buildRobotCamera(scene);
 
-  // Faint rings on the table where earlier tries left the orange.
+  // Small rings on the table where earlier tries closed on nothing.
   const RING_COUNT = 16;
   const ringMaterial = new THREE.MeshBasicMaterial({ color: COLORS.ink, transparent: true, opacity: 0.42, depthWrite: false });
-  const ringGeometry = new THREE.RingGeometry(0.04, 0.048, 40);
+  const ringGeometry = new THREE.RingGeometry(0.022, 0.029, 40);
   const rings = [];
   for (let index = 0; index < RING_COUNT; index += 1) {
     const ring = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -84,73 +88,87 @@ function start(stageElement, mode) {
   }
 
   // ---------- Paths ----------
-  // Every move starts the same way: down to the orange, close, lift. Then it carries the orange
-  // somewhere and sets it down.
-  function carryPath(middle, drop, dropHeight = ORANGE_RESTING_HEIGHT, aboveDrop = 0.26) {
-    return makePath([
+  // The hard part is the grasp. A try that misses comes down beside the orange, closes on nothing and
+  // lifts away empty. The try that works closes on the orange, carries it over and sets it in the bowl.
+  const GRASP_HEIGHT = ORANGE_START.y - ORANGE_ABOVE_GRIPPER_TIP;
+  function missPath(spot, approach) {
+    return Object.assign(makePath([
       HOME,
-      v(ORANGE_START.x, 0.28, ORANGE_START.z),
-      v(ORANGE_START.x, ORANGE_START.y - ORANGE_ABOVE_GRIPPER_TIP, ORANGE_START.z),
-      v(ORANGE_START.x, 0.28, ORANGE_START.z),
-      middle,
-      v(drop.x, aboveDrop, drop.z),
-      v(drop.x, dropHeight - ORANGE_ABOVE_GRIPPER_TIP, drop.z),
-      v(drop.x, 0.28, drop.z),
-    ], { grasp: 2, release: 6 });
+      approach,
+      v(spot.x, 0.27, spot.z),
+      v(spot.x, GRASP_HEIGHT, spot.z),
+      v(spot.x, 0.3, spot.z),
+    ], { grasp: 3, release: 4 }), { carries: false, closeSpot: v(spot.x, 0, spot.z) });
   }
-  function withLanding(path, landing) { return Object.assign(path, { landing }); }
-  const tableSpot = (spot) => v(spot.x, ORANGE_RESTING_HEIGHT, spot.z);
+  function graspPath(approach, carryMiddle) {
+    return Object.assign(makePath([
+      HOME,
+      approach,
+      v(ORANGE_START.x, 0.27, ORANGE_START.z),
+      v(ORANGE_START.x, GRASP_HEIGHT, ORANGE_START.z),
+      v(ORANGE_START.x, 0.3, ORANGE_START.z),
+      carryMiddle,
+      v(BOWL.x, 0.3, BOWL.z),
+      v(BOWL.x, ORANGE_IN_BOWL.y - ORANGE_ABOVE_GRIPPER_TIP, BOWL.z),
+      v(BOWL.x, 0.3, BOWL.z),
+    ], { grasp: 3, release: 7 }), { carries: true, closeSpot: v(ORANGE_START.x, 0, ORANGE_START.z), landing: ORANGE_IN_BOWL.clone() });
+  }
 
-  // What the robot does on its own: a tidy move that sets the orange down short of the bowl.
-  const habitPath = withLanding(carryPath(v(-0.02, 0.33, 0.24), HABIT_DROP), tableSpot(HABIT_DROP));
+  // What the robot does on its own: a tidy move that comes down beside the orange and closes on nothing.
+  const habitPath = missPath(HABIT_GRASP, v(-0.03, 0.34, 0.12));
 
-  // Wiggles: the same move with small random jitter added, so each try lands a little off,
-  // but always near the same spot.
+  // Wiggles: the same move with small random jitter added on the way down, so each try closes
+  // a little off, but always near the same wrong spot.
   const WIGGLE_COUNT = 8;
   const SAMPLES = 84;
-  const GRASP_SAMPLE = 24;
-  const RELEASE_SAMPLE = 72;
+  const CLOSE_SAMPLE = 63;
   const wiggleRandom = seededRandom(11);
   const centered = () => wiggleRandom() + wiggleRandom() + wiggleRandom() - 1.5;
   const wigglePaths = [];
   for (let wiggle = 0; wiggle < WIGGLE_COUNT; wiggle += 1) {
-    const shift = v(centered() * 0.05, 0, centered() * 0.05);
+    // Never closer to the orange than the robot's own move, so no wiggle touches it.
+    const shift = v(Math.min(0.005, centered() * 0.04), 0, centered() * 0.06);
     const jitter = [];
-    for (let index = 0; index <= SAMPLES; index += 1) jitter.push(v(centered(), centered() * 0.7, centered()).multiplyScalar(0.018));
+    for (let index = 0; index <= SAMPLES; index += 1) jitter.push(v(centered(), centered() * 0.7, centered()).multiplyScalar(0.02));
     const points = [];
     for (let index = 0; index <= SAMPLES; index += 1) {
       const point = habitPath.curve.getPoint(index / SAMPLES);
-      if (index > GRASP_SAMPLE) {
-        const carried = clamp01((index - GRASP_SAMPLE) / (RELEASE_SAMPLE - GRASP_SAMPLE));
-        point.addScaledVector(shift, ease(carried));
-        // Jitter only while carrying, and none at the grasp or the release, so both stay clean.
-        if (index < RELEASE_SAMPLE) {
-          const neighbors = jitter[index - 1].clone().add(jitter[index]).add(jitter[index + 1]).multiplyScalar(1 / 3);
-          point.addScaledVector(neighbors, Math.sin(Math.PI * carried));
-        }
+      const along = clamp01(index / CLOSE_SAMPLE);
+      point.addScaledVector(shift, ease(along));
+      // Jitter only on the way down, and none at the start or where the fingers close.
+      if (index > 0 && index < CLOSE_SAMPLE) {
+        const neighbors = jitter[index - 1].clone().add(jitter[index]).add(jitter[index + 1]).multiplyScalar(1 / 3);
+        point.addScaledVector(neighbors, Math.sin(Math.PI * along));
       }
       points.push(point);
     }
-    wigglePaths.push(withLanding(
-      makePath(points, { grasp: GRASP_SAMPLE, release: RELEASE_SAMPLE }),
-      tableSpot(HABIT_DROP.clone().add(shift)),
-    ));
+    wigglePaths.push(Object.assign(makePath(points, { grasp: CLOSE_SAMPLE, release: SAMPLES }), {
+      carries: false,
+      closeSpot: HABIT_GRASP.clone().add(shift).setY(0),
+    }));
   }
 
-  // Blindfolded plans: realistic moves that go somewhere genuinely different. The last one reaches the bowl.
+  // Blindfolded plans: realistic moves that come at the orange from genuinely different places.
+  // Four still miss the grasp; the fifth closes on the orange and puts it in the bowl.
   const plans = [
-    withLanding(carryPath(v(-0.1, 0.42, 0.02), v(-0.22, 0, -0.12)), tableSpot(v(-0.22, 0, -0.12))),
-    withLanding(carryPath(v(0.14, 0.3, 0.26), v(0.16, 0, 0.08)), tableSpot(v(0.16, 0, 0.08))),
-    withLanding(carryPath(v(0.05, 0.2, 0.35), v(-0.04, 0, 0.34), ORANGE_RESTING_HEIGHT, 0.2), tableSpot(v(-0.04, 0, 0.34))),
-    withLanding(carryPath(v(-0.14, 0.3, 0.31), v(-0.27, 0, 0.33)), tableSpot(v(-0.27, 0, 0.33))),
-    withLanding(carryPath(v(-0.18, 0.44, 0.22), BOWL, ORANGE_IN_BOWL.y, 0.3), ORANGE_IN_BOWL.clone()),
+    missPath(v(0.05, 0, 0.19), v(0.1, 0.38, 0.0)),
+    missPath(v(0.19, 0, 0.29), v(0.2, 0.36, 0.1)),
+    missPath(v(-0.04, 0, 0.2), v(-0.12, 0.36, 0.05)),
+    missPath(v(0.13, 0, 0.36), v(0.16, 0.3, 0.22)),
+    graspPath(v(0.13, 0.36, 0.14), v(-0.16, 0.42, 0.24)),
   ];
   const SUCCESS_PLAN = plans.length - 1;
 
   const habitTube = makeTube(scene, habitPath.curve, COLORS.ink, 0.006);
   const wiggleTubes = wigglePaths.map((path) => makeTube(scene, path.curve, COLORS.ink, 0.0035, 0.55));
   const planTubes = plans.map((path) => makeTube(scene, path.curve, COLORS.ink, 0.0055));
-  const allTubes = [habitTube, ...wiggleTubes, ...planTubes];
+  // Ways it could go: faint paths that fan out from the hand while it stops to think.
+  const ghostEnds = [v(-0.3, 0.12, 0.3), v(-0.14, 0.08, 0.42), v(0.06, 0.08, 0.46), v(0.24, 0.1, 0.36), v(0.32, 0.14, 0.12)];
+  const ghostTubes = ghostEnds.map((end) => {
+    const middle = HOME.clone().lerp(end, 0.5).add(v(0, 0.12, 0));
+    return makeTube(scene, makePath([HOME, middle, end], { grasp: 1, release: 2 }).curve, COLORS.ink, 0.0035, 0.5);
+  });
+  const allTubes = [habitTube, ...wiggleTubes, ...planTubes, ...ghostTubes];
   const inkColor = new THREE.Color(COLORS.ink);
   const accentColor = new THREE.Color(COLORS.accent);
 
@@ -173,43 +191,65 @@ function start(stageElement, mode) {
   const ROUGH_SPREAD = 0.11;
 
   // ---------- One try ----------
-  // A try, at progress 0 to 1: the orange hops back to its start (if it isn't there), the arm runs the
-  // path, sets the orange down, and goes back to rest.
-  function tryAlong(path, progress, orangeFrom, hopShare = 0.14) {
-    const hop = hopShare > 0 ? ease(clamp01(progress / hopShare)) : 1;
-    const motion = ease(clamp01((progress - hopShare) / (0.86 - hopShare)));
+  // The hand pauses where it closes, so the fingers visibly close before it lifts. A try that carries
+  // the orange pauses again at the bowl while the fingers open.
+  const PAUSE_LENGTH = 0.08;
+  function pacedMotion(path, raw) {
+    const stops = path.carries ? [path.graspAt, path.releaseAt] : [path.graspAt];
+    const closedTo = path.carries ? GRIP_ON_ORANGE : 0;
+    const time = raw * (1 + stops.length * PAUSE_LENGTH);
+    const closingDone = time > stops[0] + PAUSE_LENGTH * 0.75;
+    if (time <= stops[0]) return { motion: time, gripperOpen: 1, closed: false };
+    if (time <= stops[0] + PAUSE_LENGTH) {
+      const closing = ease(clamp01((time - stops[0]) / (PAUSE_LENGTH * 0.75)));
+      return { motion: stops[0], gripperOpen: 1 + (closedTo - 1) * closing, closed: closingDone };
+    }
+    const afterClose = time - PAUSE_LENGTH;
+    if (stops.length === 1 || afterClose <= stops[1]) return { motion: Math.min(1, afterClose), gripperOpen: closedTo, closed: true };
+    if (afterClose <= stops[1] + PAUSE_LENGTH) {
+      const opening = ease(clamp01((afterClose - stops[1]) / (PAUSE_LENGTH * 0.75)));
+      return { motion: stops[1], gripperOpen: closedTo + (1 - closedTo) * opening, closed: true };
+    }
+    return { motion: Math.min(1, afterClose - PAUSE_LENGTH), gripperOpen: 1, closed: true };
+  }
+  // A try, at progress 0 to 1: the arm runs the path and goes back to rest. The orange stays put
+  // unless the fingers actually close on it.
+  function tryAlong(path, progress) {
+    const { motion, gripperOpen, closed } = pacedMotion(path, ease(clamp01(progress / 0.86)));
     const goingHome = ease(clamp01((progress - 0.88) / 0.12));
-    const pathPoint = path.curve.getPoint(motion);
-    const gripperTip = pathPoint.clone().lerp(HOME, goingHome);
-    let orangePosition;
+    const gripperTip = path.curve.getPoint(motion).lerp(HOME, goingHome);
+    let orangePosition = ORANGE_START;
     let orangeHeld = false;
-    if (motion <= 0 || motion < path.graspAt) orangePosition = hopBetween(orangeFrom, ORANGE_START, hop);
-    else if (motion < path.releaseAt) { orangePosition = null; orangeHeld = true; }
-    else orangePosition = path.landing;
-    return { gripperTip, gripperOpen: gripOpenAlong(path, motion), orangePosition, orangeHeld, motion, landed: motion >= path.releaseAt };
+    const landed = path.carries && motion >= path.releaseAt;
+    if (path.carries && motion >= path.graspAt && !landed) { orangePosition = null; orangeHeld = true; }
+    if (landed) orangePosition = path.landing;
+    return {
+      gripperTip,
+      gripperOpen: gripperOpen + (1 - gripperOpen) * goingHome,
+      orangePosition,
+      orangeHeld,
+      motion,
+      landed,
+      missed: closed && !path.carries,
+    };
   }
-  // An object hops in an arc, with no hand.
-  function hopBetween(from, to, amount) {
-    if (from.distanceTo(to) < 0.001) return to.clone();
-    return from.clone().lerp(to, amount).add(v(0, 0.14 * Math.sin(Math.PI * amount), 0));
-  }
-  // A run of tries one after another inside a single step. Returns the try under way and the
-  // landing spots of the tries before it.
-  function tryRun(pathList, progress, orangeFrom) {
+  // A run of tries one after another inside a single step. Returns the try under way and the spots
+  // where earlier tries closed on nothing.
+  function tryRun(pathList, progress) {
     const count = pathList.length;
     const index = Math.min(count - 1, Math.floor(progress * count));
-    const local = progress * count - index;
-    const previous = index === 0 ? orangeFrom : pathList[index - 1].landing;
-    const current = tryAlong(pathList[index], local, previous);
-    const earlierLandings = pathList.slice(0, index).map((path) => path.landing);
-    return { index, current, earlierLandings };
+    const current = tryAlong(pathList[index], progress * count - index);
+    const misses = pathList.slice(0, index).filter((path) => !path.carries).map((path) => path.closeSpot);
+    if (current.missed) misses.push(pathList[index].closeSpot);
+    return { index, current, misses };
   }
 
   // ---------- Shots ----------
   const introShot = (progress) => [v(0.42 - progress * 0.4, 1.25, 1.9), v(-0.14, 0.17, 0)];
   const mainShot = [v(0.02, 1.32, 1.82), v(-0.14, 0.17, 0.02)];
   const wideShot = [v(-0.06, 1.5, 2.1), v(-0.16, 0.22, -0.04)];
-  const clusterShot = [v(-0.12, 1.02, 1.42), v(-0.2, 0.06, 0.16)];
+  // Close on the orange and the wrong spot beside it.
+  const clusterShot = [v(0.04, 0.98, 1.45), v(-0.02, 0.06, 0.26)];
   // Close on the robot's camera, so the blindfold going on is easy to see.
   const blindShot = [v(-0.4, 0.54, 0.1), v(-0.58, 0.33, -0.3)];
   const planShot = [v(-0.06, 1.42, 1.95), v(-0.16, 0.2, 0.04)];
@@ -219,62 +259,70 @@ function start(stageElement, mode) {
   // The traces of the wiggles so far: earlier ones in full, the current one as far as the hand has gone.
   const wiggleTubesUpTo = (done, motion) => wiggleTubes.slice(0, done + 1).map((tube, index) => [tube, index < done ? 1 : motion, 0.85]);
   const FIRST_WIGGLES = 2;
+  const habitMiss = [habitPath.closeSpot];
+  const wiggleMisses = wigglePaths.map((path) => path.closeSpot);
 
   const steps = [
     // 0. We want robots that improve themselves: the scene, with the robot at rest.
     (progress) => ({
       gripperTip: HOME.clone().add(v(0, 0.02 * Math.sin(progress * Math.PI * 2), 0)),
-      orangePosition: ORANGE_START,
       camera: introShot(progress),
     }),
-    // 1. Give it a task it can't solve yet: the goal appears in the bowl, the robot tries, and falls short.
+    // 1. Give it a task it can't solve yet: the goal appears in the bowl, the robot reaches for the orange,
+    // and its fingers close beside it.
     (progress) => {
       const showGoal = ease(clamp01(progress / 0.2));
-      const attempt = tryAlong(habitPath, clamp01((progress - 0.18) / 0.82), ORANGE_START, 0);
+      const attempt = tryAlong(habitPath, clamp01((progress - 0.18) / 0.82));
       return {
         ...attempt,
         goal: showGoal,
+        rings: attempt.missed ? habitMiss : [],
         tubes: [[habitTube, attempt.motion]],
         camera: mainShot,
       };
     },
-    // 2. It has to explore to find a way: the orange goes back, the camera pulls back over the whole table.
+    // 2. It has to explore to find a way: the hand stops and looks around, and faint paths fan out
+    // from it toward other ways it could go. The camera pulls back over the whole table.
     (progress) => ({
-      gripperTip: HOME,
-      orangePosition: hopBetween(habitPath.landing, ORANGE_START, ease(clamp01(progress / 0.35))),
+      gripperTip: HOME.clone().add(v(0.05 * Math.sin(progress * Math.PI * 2), 0.015 * Math.sin(progress * Math.PI * 4), 0)),
       goal: 1,
-      tubes: [[habitTube, 1, 1 - 0.5 * ease(clamp01(progress / 0.5))]],
-      camera: lerpShot(mainShot, wideShot, ease(clamp01((progress - 0.2) / 0.8))),
+      rings: habitMiss,
+      tubes: [
+        [habitTube, 1, 1 - 0.5 * ease(clamp01(progress / 0.3))],
+        ...ghostTubes.map((tube, index) => [tube, ease(clamp01((progress - 0.15 - index * 0.1) / 0.35)), 1]),
+      ],
+      camera: lerpShot(mainShot, wideShot, ease(clamp01(progress / 0.6))),
     }),
     // 3. Most methods wiggle around: the same move, with a little random jitter, twice.
     (progress) => {
-      const run = tryRun(wigglePaths.slice(0, FIRST_WIGGLES), progress, ORANGE_START);
+      const run = tryRun(wigglePaths.slice(0, FIRST_WIGGLES), progress);
       return {
         ...run.current,
         goal: 1,
-        rings: run.earlierLandings,
-        tubes: [[habitTube, 1, 0.35], ...wiggleTubesUpTo(run.index, run.current.motion)],
+        rings: [...habitMiss, ...run.misses],
+        tubes: [
+          [habitTube, 1, 0.35],
+          ...ghostTubes.map((tube) => [tube, 1, 1 - ease(clamp01(progress / 0.15))]),
+          ...wiggleTubesUpTo(run.index, run.current.motion),
+        ],
         camera: lerpShot(wideShot, mainShot, ease(clamp01(progress / 0.3))),
       };
     },
-    // 4. Wiggling rarely finds anything new: the rest of the wiggles, faster, all landing in the same place.
-    // Then the camera moves in on the cluster, next to the empty bowl.
+    // 4. Wiggling rarely finds anything new: the rest of the wiggles, faster, all closing on nothing
+    // in the same place. Then the camera moves in on the cluster beside the untouched orange.
     (progress) => {
-      const runShare = 0.78;
-      const rest = wigglePaths.slice(FIRST_WIGGLES);
-      const run = tryRun(rest, clamp01(progress / runShare), wigglePaths[FIRST_WIGGLES - 1].landing);
-      const done = run.index + FIRST_WIGGLES;
+      const run = tryRun(wigglePaths.slice(FIRST_WIGGLES), clamp01(progress / 0.78));
       return {
         ...run.current,
         goal: 1,
-        rings: [...wigglePaths.slice(0, FIRST_WIGGLES).map((path) => path.landing), ...run.earlierLandings],
-        tubes: [[habitTube, 1, 0.35], ...wiggleTubesUpTo(done, run.current.motion)],
+        rings: [...habitMiss, ...wiggleMisses.slice(0, FIRST_WIGGLES), ...run.misses],
+        tubes: [[habitTube, 1, 0.35], ...wiggleTubesUpTo(run.index + FIRST_WIGGLES, run.current.motion)],
         camera: lerpShot(mainShot, clusterShot, ease(clamp01((progress - 0.55) / 0.45))),
       };
     },
-    // 5. Ours: blindfold it and give it the rough plan. The wiggles clear away and the orange goes back.
-    // The camera moves in on the robot's camera, and a box is lowered over it. Then, back on the table,
-    // the robot's own move breaks up into a rough cloud.
+    // 5. Ours: blindfold it and give it the rough plan. The wiggles clear away. The camera moves in on
+    // the robot's camera, and a box is lowered over it. Then, back on the table, the robot's own move
+    // breaks up into a rough cloud.
     (progress) => {
       const clearing = ease(clamp01(progress / 0.25));
       const blind = ease(clamp01((progress - 0.25) / 0.3));
@@ -283,9 +331,8 @@ function start(stageElement, mode) {
       const backToTable = ease(clamp01((progress - 0.58) / 0.3));
       return {
         gripperTip: HOME,
-        orangePosition: hopBetween(wigglePaths[WIGGLE_COUNT - 1].landing, ORANGE_START, clearing),
         goal: 1,
-        rings: clearing < 1 ? wigglePaths.map((path) => path.landing) : [],
+        rings: clearing < 1 ? [...habitMiss, ...wiggleMisses] : [],
         ringFade: 1 - clearing,
         blind,
         tubes: [
@@ -302,7 +349,6 @@ function start(stageElement, mode) {
       const drawPlans = ease(clamp01((settle - 0.55) / 0.45));
       return {
         gripperTip: HOME,
-        orangePosition: ORANGE_START,
         goal: 1,
         blind: 1,
         tubes: [[habitTube, 1, 0.05 * (1 - settle)], ...planTubes.map((tube) => [tube, drawPlans, 0.7])],
@@ -311,15 +357,15 @@ function start(stageElement, mode) {
       };
     },
     // 7. Many new tries, one works: the robot runs the plans quickly, one after another.
-    // Four put the orange somewhere new but wrong; the fifth puts it in the bowl.
+    // Four close on nothing in new places; the fifth closes on the orange and puts it in the bowl.
     (progress) => {
-      const run = tryRun(plans, clamp01(progress / 0.94), ORANGE_START);
+      const run = tryRun(plans, clamp01(progress / 0.94));
       const success = run.index === SUCCESS_PLAN && run.current.landed;
       return {
         ...run.current,
         goal: success ? 0 : 1,
         blind: 1,
-        rings: run.earlierLandings,
+        rings: run.misses,
         successGlow: success ? 1 : 0,
         tubes: planTubes.map((tube, index) => {
           if (index === run.index) return [tube, 1, 1];
@@ -427,6 +473,7 @@ function start(stageElement, mode) {
     shown.cameraTarget.lerp(cameraTarget, damping * 0.6);
 
     poseArm(arm, state.gripperTip, state.gripperOpen ?? 1);
+    arm.handGroup.rotation.y += HAND_TURN;
     if (state.orangeHeld) orange.position.copy(state.gripperTip).add(v(0, ORANGE_ABOVE_GRIPPER_TIP, 0));
     else orange.position.copy(state.orangePosition ?? ORANGE_START);
 
@@ -560,8 +607,8 @@ function start(stageElement, mode) {
       new IntersectionObserver((entries) => { previewVisible = entries[0].isIntersecting; }).observe(stageElement);
     }
     if (prefersReducedMotion.matches) {
-      // No looping motion: show one still frame of the robot putting the orange in the bowl.
-      applyState(steps[7](0.93), 1);
+      // No looping motion: show one still frame of the robot carrying the orange to the bowl.
+      applyState(steps[7](0.86), 1);
       renderer.render(scene, camera);
       return;
     }
