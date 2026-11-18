@@ -44,7 +44,17 @@ function start(stageElement, mode) {
     const goingOut = clamp01(lastBox.bottom / (viewportHeight * 0.6));
     return Math.min(comingIn, goingOut);
   }
+  // Hold each result card in the middle of the screen while it is the focus.
+  const resultCards = cardFlows.flatMap((flow) => [...flow.querySelectorAll('.result-card')]);
+  function centerResultCards() {
+    const viewportHeight = window.innerHeight;
+    resultCards.forEach((card) => {
+      const top = `${Math.round(Math.max(viewportHeight * 0.06, (viewportHeight - card.offsetHeight) / 2))}px`;
+      if (card.style.top !== top) card.style.top = top;
+    });
+  }
   function updateDim() {
+    centerResultCards();
     if (!cardFlows.length || !dimLayer) return;
     const dim = Math.round(Math.max(...cardFlows.map(dimForFlow)) * 100) / 100;
     if (dim === shownDim) return;
@@ -53,6 +63,12 @@ function start(stageElement, mode) {
     canvas.style.filter = dim > 0 ? `blur(${(10 * dim).toFixed(1)}px)` : '';
   }
   const stepElements = mode === 'scroll' ? [...document.querySelectorAll('.step')] : [];
+  const stepCards = stepElements.map((element) => element.querySelector('.card'));
+  // The flow of cards right after a step, if any. Its first card pushes that step's text away.
+  const flowAfterStep = stepElements.map((element) => {
+    const next = element.nextElementSibling;
+    return next && next.classList.contains('card-flow') ? next.querySelector('.result-card') : null;
+  });
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -60,6 +76,7 @@ function start(stageElement, mode) {
     document.documentElement.classList.add('no-webgl');
     return;
   }
+  if (mode === 'scroll') document.documentElement.classList.add('paced');
   const { scene, camera } = buildStudio(renderer);
 
   buildTable(scene);
@@ -313,6 +330,44 @@ function start(stageElement, mode) {
     return { stepIndex: stepElements.length - 1, progress: 1 };
   }
 
+  // Pacing: each step's animation plays first with no text on screen. Only when it has finished does
+  // the text fade and slide in to explain it. As the next step's animation starts, that text fades out.
+  const ANIMATION_SHARE = 0.55;
+  const TEXT_IN_START = 0.6;
+  const TEXT_IN_LENGTH = 0.15;
+  const TEXT_OUT_LENGTH = 0.2;
+  const TEXT_SLIDE_PIXELS = 24;
+  function animationProgress(stepProgress) {
+    return clamp01(stepProgress / ANIMATION_SHARE);
+  }
+  function updateStepText(position) {
+    const viewportHeight = window.innerHeight;
+    stepCards.forEach((card, index) => {
+      if (!card) return;
+      let shown = 0;
+      let slide = TEXT_SLIDE_PIXELS;
+      if (index === position.stepIndex) {
+        shown = clamp01((position.progress - TEXT_IN_START) / TEXT_IN_LENGTH);
+        slide = TEXT_SLIDE_PIXELS * (1 - shown);
+      } else if (index === position.stepIndex - 1) {
+        const leaving = clamp01(position.progress / TEXT_OUT_LENGTH);
+        shown = 1 - leaving;
+        slide = -TEXT_SLIDE_PIXELS * leaving;
+      }
+      const flowCard = flowAfterStep[index];
+      if (flowCard && shown > 0) {
+        // The first result card coming up from the bottom pushes this text out.
+        const leaving = clamp01((viewportHeight - flowCard.getBoundingClientRect().top) / (viewportHeight * 0.35));
+        if (leaving > 0) { shown *= 1 - leaving; slide = -TEXT_SLIDE_PIXELS * leaving; }
+      }
+      shown = Math.round(shown * 100) / 100;
+      if (prefersReducedMotion.matches) slide = 0;
+      card.style.opacity = String(shown);
+      card.style.transform = `translateY(${slide.toFixed(1)}px)`;
+      card.style.visibility = shown > 0 ? 'visible' : 'hidden';
+    });
+  }
+
   let lastActiveIndex = -1;
   function markActiveStep(stepIndex) {
     if (stepIndex === lastActiveIndex) return;
@@ -429,7 +484,9 @@ function start(stageElement, mode) {
     } else {
       position = currentStoryPosition();
       markActiveStep(position.stepIndex);
+      updateStepText(position);
       updateDim();
+      position = { stepIndex: position.stepIndex, progress: animationProgress(position.progress) };
     }
     const state = steps[Math.min(position.stepIndex, steps.length - 1)](position.progress);
     const damping = prefersReducedMotion.matches ? 1 : 1 - Math.exp(-elapsedSeconds * 9);

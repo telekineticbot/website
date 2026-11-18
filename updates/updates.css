@@ -52,23 +52,25 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .stage-fallback { position: absolute; inset: 0; display: none; place-items: center; padding: 24px; text-align: center; font: 400 13px/1.6 var(--mono); color: var(--ink-soft); }
 .no-webgl .stage-fallback { display: grid; }
 .steps { position: relative; margin-top: -100vh; margin-top: -100svh; z-index: 2; pointer-events: none; }
-/* Each card scrolls up as before and pauses briefly near the top left before moving on. */
-.step { min-height: 110vh; display: flex; align-items: center; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
-/* The card sits in a short track: it holds near the top left while the track passes, then scrolls on. */
-.step-track { height: 60vh; display: flex; flex-direction: column; }
-.step .card { position: sticky; top: 22vh; align-self: flex-start; }
-/* A step before a run of cards finishes its motion first, and its text leaves just as the first card comes in. */
-.step:has(+ .card-flow) { min-height: 150vh; align-items: flex-end; padding-bottom: 70vh; }
+/* Each step is a stretch of scroll. Its animation plays first; then its text fades in near the top left and holds. */
+.step { min-height: 140vh; padding: 0 max(20px, env(safe-area-inset-left)); max-width: 1120px; margin: 0 auto; }
+/* A step before a run of cards gets room to finish, and its text leaves as the first card comes in. */
+.step:has(+ .card-flow) { min-height: 150vh; }
+/* Once the story script runs, it places the text over the scene and fades it in and out with the scroll. */
+.paced .step .card { position: fixed; top: 22vh; left: max(20px, calc((100vw - 1120px) / 2 + 20px)); opacity: 0; visibility: hidden; transition: none; will-change: opacity, transform; }
 /* Results: two cards slide up over the stage, which blurs and darkens behind them. */
 .stage-dim { position: absolute; inset: 0; background: #14140f; opacity: 0; pointer-events: none; }
-.card-flow { position: relative; pointer-events: auto; max-width: 1120px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); display: grid; gap: 14vh; }
+/* Each card gets its own stretch of scroll: it slides up, holds in the middle as the focus, then slides away before the next one comes. */
+.card-flow { position: relative; pointer-events: auto; max-width: 1120px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); display: grid; gap: 90vh; }
+.card-slot { min-height: 130vh; }
+.card-slot > .result-card { position: sticky; top: 12vh; }
 .result-card { background: var(--card); border-radius: 20px; padding: clamp(20px, 3vw, 36px); box-shadow: 0 24px 70px #14140f40; display: grid; gap: 20px; }
 .result-card h2 { font: 700 clamp(26px, 3.4vw, 36px)/1.1 var(--display); letter-spacing: -.025em; margin: 0; }
 .result-card > p { margin: -8px 0 0; max-width: 60ch; }
 .result-card .chart { background: none; border: 0; border-radius: 0; padding: 0; }
-.card { pointer-events: auto; width: auto; max-width: none; white-space: nowrap; background: #f6f5f1e6; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border: 1px solid var(--ink-faint); border-radius: 12px; padding: 20px 22px; opacity: .35; transform: translateY(12px); transition: opacity .4s, transform .4s; }
-.step.is-active .card { opacity: 1; transform: none; }
-.card .phrase { font: 700 22px/1.2 var(--display); letter-spacing: -.02em; }
+/* Step text sits straight on the scene, with no box behind it. */
+.card { pointer-events: auto; max-width: 16em; color: var(--ink); }
+.card .phrase { font: 700 clamp(24px, 2.6vw, 34px)/1.12 var(--display); letter-spacing: -.025em; text-wrap: balance; }
 .card p { margin: 0; font-size: 20px; line-height: 1.35; letter-spacing: -.01em; }
 .card p + p { margin-top: 10px; }
 .card .stat { font: 700 44px/1 var(--display); letter-spacing: -.03em; margin-top: 14px; }
@@ -181,12 +183,9 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 
 @media (max-width: 760px) {
   /* The 3D stage sits in the top part of the screen; the cards scroll through the bottom. */
-  .step { align-items: center; padding-bottom: 0; }
-  .step-track { justify-content: flex-end; }
-  .step .card { top: auto; bottom: 6vh; }
-  .step:has(+ .card-flow) { padding-bottom: 6vh; }
-  .card { padding: 14px 18px; white-space: normal; max-width: 100%; }
-  .card .phrase { font-size: min(18px, 4.6vw); text-wrap: balance; }
+  .paced .step .card { top: auto; bottom: 7vh; left: 20px; right: 20px; }
+  .card { max-width: none; }
+  .card .phrase { font-size: min(24px, 6.2vw); }
   .card .stat { font-size: 36px; }
     .post-list a { grid-template-columns: minmax(0, 42%) 1fr; gap: 14px; padding: 16px 0; }
   .site-footer-inner { flex-direction: column; gap: 8px; }

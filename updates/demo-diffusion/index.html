@@ -60,16 +60,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <div class="steps">
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">Task: robot puts bowl in sink.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">A person shows it once.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">Next time, the bowl moves.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">Copying the demo exactly would miss the bowl.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">We add noise to the demo.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">The robot cleans it up to fit.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">The bowl goes in the sink.</p></div></div></div>
+      <div class="step"><div class="card"><p class="phrase">Task: robot puts bowl in sink.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">A person shows it once.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Next time, the bowl moves.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Copying the demo exactly would miss the bowl.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">We add noise to the demo.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The robot cleans it up to fit.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The bowl goes in the sink.</p></div></div>
 
       <section class="card-flow" aria-label="Results">
-        <div class="result-card">
+        <div class="card-slot"><div class="result-card">
 
         <div class="sbs" data-synced-videos>
           <figure>
@@ -87,8 +87,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </figure>
         </div>
-        </div>
-        <div class="result-card">
+        </div></div>
+        <div class="card-slot"><div class="result-card">
     <div class="chart" role="img" aria-label="Task success rate. Bowl into sink: 0 of 16 on its own, 10 of 16 with one demo. Orange into bowl: 0 of 49, 8 of 49. Apple onto plate: 0 of 16, 3 of 16. Stack a block: 0 of 16, 3 of 16.">
           <div class="chart-head">
             <h3>Task success rate</h3>
@@ -129,21 +129,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <p class="fine">Object positions change on every try.</p>
         </div>
-        </div>
+        </div></div>
       </section>
 
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">Robot will follow demo even if we asked it to do something different.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">But the demo shows a different task.</p></div></div></div>
-      <div class="step"><div class="step-track"><div class="card"><p class="phrase">This means that if we don't show it good demos it'll screw up.</p></div></div></div>
+      <div class="step"><div class="card"><p class="phrase">Robot will follow demo even if we asked it to do something different.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">But the demo shows a different task.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">This means that if we don't show it good demos it'll screw up.</p></div></div>
 
       <section class="card-flow" aria-label="Limitations">
-        <div class="result-card">
+        <div class="card-slot"><div class="result-card">
           <div class="film-wrap">
             <p class="video-label">pi0.5 with the wrong demo</p>
             <div class="film-glow" style="background-image:url(media/wrong-demo.jpg)" aria-hidden="true"></div>
             <div class="film"><video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
           </div>
-        </div>
+        </div></div>
       </section>
     </div>
   </section>
@@ -238,7 +238,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
       var box = chart.getBoundingClientRect();
       // 0 when the chart's top enters at the bottom of the screen, 1 when it reaches the upper third.
-      var scrolled = (viewportHeight - box.top) / (viewportHeight * 0.67);
+      var scrolled = (viewportHeight - box.top) / (viewportHeight * 0.5);
       if (reduceMotion) scrolled = scrolled > 0.5 ? 1 : 0;
       columns.forEach(function (column) {
         var start = (column.order / lastOrder) * 0.45;
