@@ -64,35 +64,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <div class="steps">
-      <div class="step"><div class="card"><p class="phrase">The task: bowl into the sink.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Task: bowl into the sink.</p></div></div>
       <div class="step"><div class="card"><p class="phrase">On its own: 0 of 16.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">We show it one expert demo.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">Normally it starts from random noise.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">We start it from the demo plus noise.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">One expert demo.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Normal start: pure noise.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Our start: demo plus noise.</p></div></div>
       <div class="step"><div class="card"><p class="phrase">Now it works: 10 of 16.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">Four tasks, all up from zero.</p>
-        <div class="bars">
-          <div class="bars-legend"><span><i style="background:#14140f8c"></i>On its own</span><span><i style="background:#ff7122"></i>With one demo</span></div>
-          <div>
-            <p class="bar-task"><span>Bowl into sink</span><span>10/16</span></p>
-            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:62.5%"></div></div></div>
-          </div>
-          <div>
-            <p class="bar-task"><span>Orange into bowl</span><span>8/49</span></p>
-            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:16.3%"></div></div></div>
-          </div>
-          <div>
-            <p class="bar-task"><span>Apple onto plate</span><span>3/16</span></p>
-            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:18.75%"></div></div></div>
-          </div>
-          <div>
-            <p class="bar-task"><span>Stack a block</span><span>3/16</span></p>
-            <div class="bar-pair"><div class="bar-track"><div class="bar-fill zero" style="--value:0%"></div></div><div class="bar-track"><div class="bar-fill with-demo" style="--value:18.75%"></div></div></div>
-          </div>
-        </div>
-      </div></div>
-      <div class="step"><div class="card"><p class="phrase">Wrong demo? It copies it: 0 of 8.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">Next: train on 10 runs. 30 of 32, no demo.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Four tasks, all up from zero.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Wrong demo? It copies it.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Trained on 10 runs: 30 of 32.</p></div></div>
     </div>
   </section>
 
@@ -118,6 +98,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="section" aria-labelledby="details-title">
     <h2 id="details-title">The details</h2>
     <div class="details">
+      <div>
+        <h3>Results</h3>
+        <ul>
+          <li>Bowl into sink: 0 to 10 of 16.</li>
+          <li>Orange into bowl: 0 to 8 of 49.</li>
+          <li>Apple onto plate: 0 to 3 of 16.</li>
+          <li>Stack a block: 0 to 3 of 16.</li>
+          <li>Wrong demo: 0 of 8.</li>
+          <li>After training on 10 runs, no demo: 30 of 32.</li>
+        </ul>
+      </div>
       <div>
         <h3>Setup</h3>
         <ul>
