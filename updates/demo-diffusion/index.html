@@ -76,49 +76,75 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <section class="section" aria-labelledby="results-title">
     <h2 id="results-title">Results</h2>
-    <p>The same frozen pi0.5 in the same simulated kitchen, with and without one demo. Object positions change on every try.</p>
-    <figure class="sbs">
-      <div class="sbs-labels" aria-hidden="true"><span>pi0.5 on its own</span><span>pi0.5 with one demo</span></div>
-      <video src="media/alone-vs-demo.mp4" poster="media/alone-vs-demo.jpg" muted loop playsinline controls preload="none"></video>
-      <figcaption>One scene, side by side. The labels on the video come from our research notes.</figcaption>
-    </figure>
-    <div class="compare-wrap">
-      <table class="compare">
-        <thead><tr><th scope="col">Task</th><th scope="col">pi0.5 on its own</th><th scope="col">pi0.5 with one demo</th></tr></thead>
-        <tbody>
-          <tr><th scope="row">Bowl into sink</th><td>0 of 16</td><td class="win">10 of 16</td></tr>
-          <tr><th scope="row">Orange into bowl</th><td>0 of 49</td><td class="win">8 of 49</td></tr>
-          <tr><th scope="row">Apple onto plate</th><td>0 of 16</td><td class="win">3 of 16</td></tr>
-          <tr><th scope="row">Stack a block</th><td>0 of 16</td><td class="win">3 of 16</td></tr>
-        </tbody>
-      </table>
+    <p>The same frozen pi0.5 in the same simulated kitchen, with and without one demo.</p>
+
+    <div class="sbs" data-synced-videos>
+      <figure>
+        <figcaption>pi0.5 on its own</figcaption>
+        <video src="media/base-alone.mp4" poster="media/base-alone.jpg" muted autoplay loop playsinline controls preload="auto"></video>
+      </figure>
+      <figure>
+        <figcaption class="with-demo">pi0.5 with one demo</figcaption>
+        <video src="media/base-with-demo.mp4" poster="media/base-with-demo.jpg" muted autoplay loop playsinline controls preload="auto"></video>
+      </figure>
     </div>
-    <p class="fine">Successful tries out of total. Best setting for each task.</p>
+    <p class="fine">Bowl into sink, same starting scene. Our demos were scripted robot runs. The animation above shows a person only to explain the idea.</p>
+
+    <div class="chart" role="img" aria-label="Task success rate. Bowl into sink: 0 of 16 on its own, 10 of 16 with one demo. Orange into bowl: 0 of 49, 8 of 49. Apple onto plate: 0 of 16, 3 of 16. Stack a block: 0 of 16, 3 of 16.">
+      <div class="chart-head">
+        <h3>Task success rate</h3>
+        <p class="chart-legend"><span><i class="base"></i>On its own</span><span><i class="demo"></i>With one demo</span></p>
+      </div>
+        <div class="chart-row">
+          <p class="chart-task">Bowl into sink</p>
+          <div class="chart-bars">
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill base" style="--value:0%"></span></span><span class="chart-value">0 of 16</span></div>
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill demo" style="--value:62.5%"></span></span><span class="chart-value">10 of 16</span></div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <p class="chart-task">Orange into bowl</p>
+          <div class="chart-bars">
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill base" style="--value:0%"></span></span><span class="chart-value">0 of 49</span></div>
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill demo" style="--value:16.3%"></span></span><span class="chart-value">8 of 49</span></div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <p class="chart-task">Apple onto plate</p>
+          <div class="chart-bars">
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill base" style="--value:0%"></span></span><span class="chart-value">0 of 16</span></div>
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill demo" style="--value:18.8%"></span></span><span class="chart-value">3 of 16</span></div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <p class="chart-task">Stack a block</p>
+          <div class="chart-bars">
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill base" style="--value:0%"></span></span><span class="chart-value">0 of 16</span></div>
+            <div class="chart-bar"><span class="chart-track"><span class="chart-fill demo" style="--value:18.8%"></span></span><span class="chart-value">3 of 16</span></div>
+          </div>
+        </div>
+      <p class="fine">Object positions change on every try.</p>
+    </div>
   </section>
 
   <section class="section" aria-labelledby="limits-title">
     <h2 id="limits-title">Limitations</h2>
-    <div class="limits">
-      <figure>
-        <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted loop playsinline controls preload="none"></video>
-        <figcaption>Asked to put the orange in the bowl, but shown a demo of a different task, it does the demo's task.</figcaption>
-      </figure>
-      <ul class="plain-list">
-        <li><strong>It copies the demo, not the goal.</strong> With a demo from another task, orange into bowl went 0 of 8.</li>
-        <li><strong>Gains are uneven.</strong> Bowl into sink works most of the time. The other three tasks succeed far less often.</li>
-        <li><strong>Every new task needs its own demo.</strong> Nothing is learned for next time.</li>
-        <li><strong>Simulation only, and small.</strong> 16 tries per setting, 49 for orange into bowl.</li>
-      </ul>
-    </div>
+    <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
   </section>
 
   <section class="section" aria-labelledby="next-title">
     <h2 id="next-title">Future extensions</h2>
     <p>Directions we plan to try next. No results yet.</p>
-    <ul class="plain-list">
-      <li><strong>Exploration.</strong> Let the robot try variations of the demo on its own, so it finds what works beyond one example.</li>
-      <li><strong>Reinforcement learning.</strong> Use those tries to train the skill into the model, so it no longer needs a demo.</li>
-    </ul>
+    <div class="stack">
+      <div>
+        <h3>Exploration</h3>
+        <p>Let the robot try variations of the demo on its own, so it finds what works beyond one example.</p>
+      </div>
+      <div>
+        <h3>Reinforcement learning</h3>
+        <p>Use those tries to train the skill into the model, so it no longer needs a demo.</p>
+      </div>
+    </div>
   </section>
 
   <section class="section" aria-labelledby="citations">
@@ -127,41 +153,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <li>Sungjae Park, Homanga Bharadhwaj, Shubham Tulsiani. <a href="https://arxiv.org/abs/2506.20668">DemoDiffusion: One-Shot Human Imitation using pre-trained Diffusion Policy</a>. arXiv 2506.20668, 2025. The inspiration for this work.</li>
       <li>Physical Intelligence, Kevin Black, Noah Brown, et al. <a href="https://arxiv.org/abs/2504.16054">&pi;<sub>0.5</sub>: a Vision-Language-Action Model with Open-World Generalization</a>. arXiv 2504.16054, 2025. The robot model we used.</li>
     </ol>
-  </section>
-
-  <section class="section appendix" aria-labelledby="appendix-title">
-    <h2 id="appendix-title">Appendix</h2>
-    <div class="details">
-      <div>
-        <h3>Setup</h3>
-        <ul>
-          <li>Kitchen scenes in Isaac Lab Arena, with a Franka arm.</li>
-          <li>Object positions are random on every try.</li>
-          <li>pi0.5's weights never change in the demo runs.</li>
-          <li>16 tries per setting. 49 for orange into bowl.</li>
-          <li>Our demos were recorded robot runs. The animation shows a person to explain the idea.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>How the demo is used</h3>
-        <ul>
-          <li>We fit the demo's path to where the objects are in this try.</li>
-          <li>pi0.5 normally builds each motion out of random noise, step by step.</li>
-          <li>Here it starts from the fitted demo path with some noise added, then finishes the motion as usual.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>The nudge variant</h3>
-        <ul>
-          <li>A variant also nudges each step of that process toward the demo.</li>
-          <li>On bowl into sink: 9 of 16 without the nudge, 10 of 16 with it.</li>
-        </ul>
-      </div>
-    </div>
-    <figure class="appendix-clip">
-      <video src="media/demo-path-overlay.mp4" poster="media/demo-path-overlay.jpg" muted loop playsinline controls preload="none"></video>
-      <figcaption>The yellow line is the demo's path. The blue line is where the robot's hand goes. It follows the demo, adapted to where the bowl is.</figcaption>
-    </figure>
   </section>
 </article>
 
@@ -178,6 +169,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var canvas = document.createElement('canvas');
     var hasWebGL = !!(window.WebGLRenderingContext && (canvas.getContext('webgl2') || canvas.getContext('webgl')));
     if (!hasWebGL) document.documentElement.classList.add('no-webgl');
+  })();
+</script>
+<script>
+  // Keep the two result videos in step: play, pause and seeking on one is copied to the other.
+  (function () {
+    var group = document.querySelector('[data-synced-videos]');
+    if (!group) return;
+    var videos = Array.prototype.slice.call(group.querySelectorAll('video'));
+    var mirroring = false;
+    function other(video) { return videos[0] === video ? videos[1] : videos[0]; }
+    function mirror(action) {
+      return function (event) {
+        if (mirroring) return;
+        mirroring = true;
+        action(event.target, other(event.target));
+        setTimeout(function () { mirroring = false; }, 0);
+      };
+    }
+    videos.forEach(function (video) {
+      video.muted = true;
+      video.addEventListener('play', mirror(function (source, target) {
+        if (Math.abs(target.currentTime - source.currentTime) > 0.1) target.currentTime = source.currentTime;
+        if (target.paused) target.play().catch(function () {});
+      }));
+      video.addEventListener('pause', mirror(function (source, target) { target.pause(); }));
+      video.addEventListener('seeked', mirror(function (source, target) {
+        // Only follow a real jump, so the two videos don't keep seeking each other.
+        if (Math.abs(target.currentTime - source.currentTime) > 0.1) target.currentTime = source.currentTime;
+      }));
+    });
+    // Correct small drift while both play.
+    videos[0].addEventListener('timeupdate', function () {
+      if (mirroring || videos[0].paused || videos[1].paused) return;
+      if (Math.abs(videos[0].currentTime - videos[1].currentTime) > 0.15) videos[1].currentTime = videos[0].currentTime;
+    });
   })();
 </script>
 <script type="module" src="story.js"></script>
