@@ -17,7 +17,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 // out of the way of the main story. For the limitations, the big bowl comes back out of the sink to where it started.
 const GOAL_BOWL = BOWL_START.clone();
 const SMALL_BOWL_START = v(0.06, 0, 0.27);
-const ORANGE_SPOT = v(-0.11, 0.034, 0.38);
+const ORANGE_SPOT = v(-0.12, 0.034, 0.3);
 const SMALL_BOWL_NESTED_HEIGHT = 0.018;
 // Where the orange rests inside the big bowl, for the beat that shows what we asked for.
 const ORANGE_IN_BOWL = v(GOAL_BOWL.x, 0.045, GOAL_BOWL.z);
@@ -163,6 +163,22 @@ function start(stageElement, mode) {
   }), { grasp: 2, release: 6 });
   const wrongDemoTube = makeTube(scene, wrongDemoPath.curve, COLORS.accent, 0.0075);
   const wrongRobotTube = makeTube(scene, wrongRobotPath.curve, COLORS.ink, 0.006);
+  // What we ask for: the robot picks up the orange and puts it in the big bowl.
+  const orangePath = makePath([
+    HOME,
+    v(ORANGE_SPOT.x, 0.28, ORANGE_SPOT.z),
+    v(ORANGE_SPOT.x, 0.06, ORANGE_SPOT.z),
+    v(ORANGE_SPOT.x, 0.28, ORANGE_SPOT.z),
+    v(-0.25, 0.36, 0.2),
+    v(GOAL_BOWL.x, 0.28, GOAL_BOWL.z),
+    v(GOAL_BOWL.x, 0.08, GOAL_BOWL.z),
+    v(GOAL_BOWL.x, 0.3, GOAL_BOWL.z),
+  ], { grasp: 2, release: 6 });
+  function orangeAlong(motion, gripperTip) {
+    if (motion < orangePath.graspAt) return ORANGE_SPOT;
+    if (motion < orangePath.releaseAt) return gripperTip.clone().add(v(0, -0.028, 0));
+    return ORANGE_IN_BOWL;
+  }
   // An object hops in an arc, with no hand: the orange showing where we want it, or a bowl going back to its spot.
   function hopBetween(from, to, amount) {
     return from.clone().lerp(to, amount).add(v(0, 0.16 * Math.sin(Math.PI * amount), 0));
@@ -296,14 +312,20 @@ function start(stageElement, mode) {
         camera: [finalMainShot[0].clone().lerp(limitsShot[0], turning), finalMainShot[1].clone().lerp(limitsShot[1], turning)],
       };
     },
-    // Limitations 2. What we ask for: the orange goes into the bowl.
-    (progress) => ({
-      gripperTip: HOME,
-      bowlPosition: GOAL_BOWL,
-      snapBowl: true,
-      limits: { smallBowlPosition: SMALL_BOWL_START, orangePosition: hopBetween(ORANGE_SPOT, ORANGE_IN_BOWL, ease(clamp01((progress - 0.1) / 0.75))), goal: 0 },
-      camera: limitsShot,
-    }),
+    // Limitations 2. What we ask for: the robot puts the orange in the bowl, then goes back to rest.
+    (progress) => {
+      const motion = ease(clamp01((progress - 0.05) / 0.7));
+      const goingHome = ease(clamp01((progress - 0.76) / 0.2));
+      const pathPoint = orangePath.curve.getPoint(motion);
+      return {
+        gripperTip: pathPoint.clone().lerp(HOME, goingHome),
+        gripperOpen: gripOpenAlong(orangePath, motion),
+        bowlPosition: GOAL_BOWL,
+        snapBowl: true,
+        limits: { smallBowlPosition: SMALL_BOWL_START, orangePosition: orangeAlong(motion, pathPoint), goal: 0 },
+        camera: limitsShot,
+      };
+    },
     // Limitations 3. The orange hops back out, leaving a see-through marker of what we asked for.
     // Then the demo shows a different task: a person nests the small bowl in the big one.
     (progress) => {
