@@ -66,6 +66,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 /* Each card gets its own stretch of scroll: it slides up, holds in the middle as the focus, then slides away before the next one comes. */
 .card-flow { position: relative; pointer-events: auto; max-width: 1120px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); display: grid; gap: 90vh; }
 .card-slot { min-height: 130vh; }
+/* The chart holds longer: its bars grow only once it has settled. */
+.card-slot:has(.chart) { min-height: 190vh; }
 .card-slot > .result-card { position: sticky; top: 12vh; }
 /* No box: the content sits straight on the blurred, darkened animation, in light type. */
 .result-card { --on-dim: #f6f5f1; --on-dim-soft: #f6f5f1b8; --on-dim-faint: #f6f5f12e; color: var(--on-dim); display: grid; gap: 20px; }

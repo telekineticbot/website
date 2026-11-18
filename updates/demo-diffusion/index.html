@@ -214,13 +214,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
 </script>
 <script>
-  // The result columns are scrubbed by scrolling: they grow as the chart card slides in and settles
-  // in the middle of the screen, and shrink back if you scroll up.
+  // The result columns are scrubbed by scrolling: once the chart card has settled in the middle of the
+  // screen, they grow with further scrolling, and shrink back if you scroll up.
   // Each task starts a little after the one before it, and the counts tick up with the bars.
   (function () {
     var chart = document.querySelector('.chart');
     if (!chart) return;
     var slot = chart.closest('.card-slot') || chart;
+    var heldCard = chart.closest('.result-card') || chart;
     var columns = Array.prototype.slice.call(chart.querySelectorAll('.chart-col')).map(function (column, index) {
       var label = column.querySelector('span');
       var parts = label.textContent.split('/');
@@ -243,9 +244,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       scheduled = false;
       var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
       var box = slot.getBoundingClientRect();
-      // 0 when the card starts to come up from the bottom of the screen. It reaches 1 after one and
-      // a fifth screens of scrolling, while the card is held in the middle.
-      var scrolled = (viewportHeight - box.top) / (viewportHeight * 1.2);
+      // The bars stay at zero while the card slides in. Once it has settled in the middle of the screen,
+      // the next 0.6 screens of scrolling grow them from zero to full.
+      var settledTop = parseFloat(heldCard.style.top) || viewportHeight * 0.12;
+      var scrolled = (settledTop - box.top) / (viewportHeight * 0.6);
       columns.forEach(function (column) {
         var start = (column.order / lastOrder) * 0.45;
         var linear = Math.min(1, Math.max(0, (scrolled - start) / 0.55));
