@@ -143,12 +143,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p>The robot follows the demo closely, so how much it can adapt is limited.</p>
     <figure class="clip">
       <div class="film-wrap" data-timed-captions>
-        <p class="video-label">pi0.5 with the wrong demo</p>
+        <div class="video-label caption-pill">
+          <span class="pill-title">pi0.5 with the wrong demo</span>
+          <span class="pill-caption" aria-live="off">Task: put the orange in the bowl.</span>
+        </div>
         <div class="film-glow" style="background-image:url(media/wrong-demo.jpg)" aria-hidden="true"></div>
         <div class="film"><video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted autoplay loop playsinline preload="auto"></video></div>
-        <p class="film-caption" aria-live="off">Task: put the orange in the bowl.</p>
       </div>
-      <figcaption>With the wrong demo, 0 of 8 tries put the orange in the bowl.</figcaption>
     </figure>
   </section>
 
@@ -275,21 +276,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
 </script>
 <script>
-  // Captions over the limitations clip, each shown for a third of every loop.
+  // Captions inside the limitations clip's label pill, each shown for a third of every loop.
+  // The pill eases to its new size while the caption text crossfades.
   (function () {
     var film = document.querySelector('[data-timed-captions]');
     if (!film) return;
     var video = film.querySelector('video');
-    var caption = film.querySelector('.film-caption');
+    var pill = film.querySelector('.caption-pill');
+    var caption = pill.querySelector('.pill-caption');
     var lines = ['Task: put the orange in the bowl.', "But it's shown a demo of a different task.", 'So it follows the demo instead.'];
     var shownIndex = 0;
+    var fadeMs = 220;
+    function naturalSize() {
+      var lockedWidth = pill.style.width, lockedHeight = pill.style.height;
+      pill.style.width = ''; pill.style.height = '';
+      var box = pill.getBoundingClientRect();
+      pill.style.width = lockedWidth; pill.style.height = lockedHeight;
+      return box;
+    }
+    function lockSize(box) { pill.style.width = box.width + 'px'; pill.style.height = box.height + 'px'; }
+    window.addEventListener('resize', function () { pill.style.width = ''; pill.style.height = ''; });
     video.addEventListener('timeupdate', function () {
       if (!video.duration) return;
       var index = Math.min(lines.length - 1, Math.floor(video.currentTime / video.duration * lines.length));
       if (index === shownIndex) return;
       shownIndex = index;
+      lockSize(pill.getBoundingClientRect());
       caption.classList.add('is-changing');
-      setTimeout(function () { caption.textContent = lines[index]; caption.classList.remove('is-changing'); }, 180);
+      setTimeout(function () {
+        var currentBox = pill.getBoundingClientRect();
+        caption.textContent = lines[index];
+        var targetBox = naturalSize();
+        lockSize(currentBox);
+        void pill.offsetWidth;
+        lockSize(targetBox);
+        setTimeout(function () { caption.classList.remove('is-changing'); }, 180);
+      }, fadeMs);
     });
   })();
 </script>
