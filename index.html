@@ -317,6 +317,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .share-button:hover { background: #ffffff40; }
   .footer { position: absolute; bottom: 30px; left: 40px; right: 40px; display: flex; justify-content: space-between; align-items: end; gap: 24px; font-family: var(--mono); font-size: 10px; line-height: 1.8; color: #14140fb3; }
   .footer p { margin: 0; }
+  .updates-link { position: absolute; top: 22px; right: max(28px, env(safe-area-inset-right)); z-index: 5; font-family: var(--mono); font-size: 13px; line-height: 1; color: var(--ink); text-decoration: none; padding: 8px 0; }
+  .updates-link:hover { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
   .footer-note { text-align: right; }
   .x-link { display: inline-flex; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; color: var(--ink); transition: opacity .2s; }
   .x-link svg { width: 100%; height: 100%; }
@@ -368,6 +370,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <main class="hero">
+  <a class="updates-link" href="updates/">Updates</a>
   <picture class="hero-visual">
   <img class="hero-photo" src="assets/robot-studio.jpg" alt="A white Telekinetic robot with two polished metal arms and a mobile base, casting a shadow across the gray studio floor" fetchpriority="high" width="1536" height="1024">
   </picture>
