@@ -160,7 +160,7 @@ function start() {
     bowlPosition: BOWL_START.clone(),
     gripperOpen: 1,
     cameraPosition: v(0.15, 1.25, 1.85),
-    cameraTarget: v(0, 0.1, 0),
+    cameraTarget: v(0, 0.17, 0),
   };
 
   // Each step returns what the scene should look like at progress (0 to 1).
@@ -169,7 +169,7 @@ function start() {
     (progress) => ({
       gripperTip: HOME.clone().add(v(0, 0.02 * Math.sin(progress * Math.PI * 2), 0)),
       bowlPosition: BOWL_START,
-      camera: [v(0.55 - progress * 0.4, 1.2, 1.85), v(0, 0.08, 0)],
+      camera: [v(0.55 - progress * 0.4, 1.2, 1.85), v(0, 0.17, 0)],
       highlight: { bowl: true, sink: true },
     }),
     // 1. pi0.5 alone: wanders and never picks the bowl up
@@ -177,14 +177,14 @@ function start() {
       gripperTip: wanderPath.curve.getPoint(ease(progress)),
       bowlPosition: BOWL_START,
       tubes: [[wanderTube, ease(progress)]],
-      camera: [v(0.15, 1.25, 1.85), v(-0.05, 0.12, 0)],
+      camera: [v(0.15, 1.25, 1.85), v(-0.05, 0.2, 0)],
     }),
     // 2. One expert demo: the orange line draws itself from the bowl to the sink
     (progress) => ({
       gripperTip: HOME,
       bowlPosition: BOWL_START,
       tubes: [[demoTube, ease(progress)]],
-      camera: [v(0.05, 1.35, 1.75), v(0, 0.12, 0)],
+      camera: [v(0.05, 1.35, 1.75), v(0, 0.2, 0)],
     }),
     // 3. How pi0.5 normally moves: start from random noise, clean it up
     (progress) => {
@@ -194,7 +194,7 @@ function start() {
         bowlPosition: BOWL_START,
         dots: { path: wanderPath, spread: 0.55, cleanup, color: COLORS.noise },
         tubes: [[wanderTube, cleanup > 0.98 ? 1 : 0]],
-        camera: [v(0.05, 1.35, 1.75), v(0, 0.12, 0)],
+        camera: [v(0.05, 1.35, 1.75), v(0, 0.2, 0)],
       };
     },
     // 4. Our change: start from the demo plus some noise
@@ -203,7 +203,7 @@ function start() {
       bowlPosition: BOWL_START,
       tubes: [[demoTube, 1, 1 - 0.65 * ease(progress)]],
       dots: { path: taskPath, spread: 0.07 * ease(progress), cleanup: 0, color: COLORS.accent },
-      camera: [v(0.05, 1.35, 1.75), v(0, 0.12, 0)],
+      camera: [v(0.05, 1.35, 1.75), v(0, 0.2, 0)],
     }),
     // 5. pi0.5 cleans that up into its own motion and does the task
     (progress) => {
@@ -216,22 +216,17 @@ function start() {
         gripperOpen: gripOpenAlong(ownPath, motion),
         tubes: [[demoTube, 1, 0.35], [ownTube, cleanup]],
         dots: cleanup < 1 ? { path: ownPath, spread: 0.07, cleanup, color: COLORS.accent, fade: 1 - cleanup } : null,
-        camera: [v(0.2, 1.2, 1.7), v(0.02, 0.1, 0)],
+        camera: [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)],
         highlight: { sink: motion > 0.97 },
       };
     },
-    // 6. Results: pull back and replay the success
-    (progress) => {
-      const motion = (progress * 1.6) % 1;
-      const pathPoint = ownPath.curve.getPoint(ease(motion));
-      return {
-        gripperTip: pathPoint,
-        bowlPosition: bowlAlong(ownPath, ease(motion), pathPoint, SINK_CENTER, -SINK_DEPTH * 0.6),
-        gripperOpen: gripOpenAlong(ownPath, ease(motion)),
-        tubes: [[ownTube, 1, 0.5]],
-        camera: [v(-0.35, 1.5, 2.25), v(0.05, 0.05, 0)],
-      };
-    },
+    // 6. Results: pull back, with the bowl resting in the sink
+    (progress) => ({
+      gripperTip: HOME.clone().add(v(0.04 * Math.sin(progress * Math.PI), 0, 0)),
+      bowlPosition: v(SINK_CENTER.x, -SINK_DEPTH * 0.6, SINK_CENTER.z),
+      tubes: [[ownTube, 1, 0.5]],
+      camera: [v(-0.35, 1.5, 2.25), v(0.05, 0.15, 0)],
+    }),
     // 7. The wrong demo: it copies a different task and puts the bowl on the plate
     (progress) => {
       const draw = ease(clamp01(progress / 0.3));
@@ -242,7 +237,7 @@ function start() {
         bowlPosition: bowlAlong(wrongPath, motion, pathPoint, PLATE_CENTER, 0.018),
         gripperOpen: gripOpenAlong(wrongPath, motion),
         tubes: [[wrongTube, draw]],
-        camera: [v(0.1, 1.3, 1.85), v(0, 0.1, 0.06)],
+        camera: [v(0.1, 1.3, 1.85), v(0, 0.18, 0.06)],
         highlight: { sink: true, sinkWrong: motion > 0.97 },
       };
     },
@@ -257,7 +252,7 @@ function start() {
         gripperOpen: gripOpenAlong(ownPath, motion),
         practice: progress < 0.45 ? stack : Math.max(0, 1 - (progress - 0.45) / 0.1),
         tubes: [[ownTube, motion]],
-        camera: [v(0.2, 1.25, 1.75), v(0.02, 0.1, 0)],
+        camera: [v(0.2, 1.25, 1.75), v(0.02, 0.18, 0)],
         highlight: { sink: motion > 0.97 },
       };
     },
@@ -288,8 +283,11 @@ function start() {
     shown.gripperTip.lerp(state.gripperTip, damping);
     shown.bowlPosition.lerp(state.bowlPosition, damping);
     shown.gripperOpen += ((state.gripperOpen ?? 1) - shown.gripperOpen) * damping;
-    shown.cameraPosition.lerp(state.camera[0], damping * 0.6);
-    shown.cameraTarget.lerp(state.camera[1], damping * 0.6);
+    // Every shot is framed a little wider and higher than its raw numbers, so the raised elbow stays in view.
+    const cameraTarget = state.camera[1].clone().add(v(0, 0.05, 0));
+    const cameraPosition = cameraTarget.clone().addScaledVector(state.camera[0].clone().sub(state.camera[1]), 1.12);
+    shown.cameraPosition.lerp(cameraPosition, damping * 0.6);
+    shown.cameraTarget.lerp(cameraTarget, damping * 0.6);
 
     poseArm(arm, shown.gripperTip, shown.gripperOpen);
     bowl.position.copy(shown.bowlPosition);
@@ -313,6 +311,7 @@ function start() {
         const along = state.dots.path.curve.getPoint(index / (DOT_COUNT - 1));
         const noisy = along.clone().addScaledVector(dotOffsets[index], state.dots.spread);
         const position = noisy.lerp(along, state.dots.cleanup);
+        position.y = Math.max(position.y, 0.015);
         dotMatrix.makeTranslation(position.x, position.y, position.z);
         dots.setMatrixAt(index, dotMatrix);
       }
@@ -334,11 +333,12 @@ function start() {
     const height = stageElement.clientHeight;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    // On narrow screens, pull back so the whole table fits, and frame it in the upper part.
+    // Keep the scene clear of the cards: on wide screens the cards sit on the left,
+    // so shift the picture right; on phones they sit at the bottom, so shift it up.
     const narrow = width < 760;
-    camera.fov = narrow ? 44 : 32;
-    camera.setViewOffset(width, height, 0, narrow ? height * 0.16 : 0, width, height);
-    if (!narrow) camera.clearViewOffset();
+    camera.fov = narrow ? 62 : 32;
+    if (narrow) camera.setViewOffset(width, height, 0, height * 0.17, width, height);
+    else camera.setViewOffset(width, height, -width * 0.14, 0, width, height);
     camera.updateProjectionMatrix();
   }
 
@@ -358,10 +358,7 @@ function start() {
   resize();
   window.addEventListener('resize', resize);
   // Start from the first step's exact pose.
-  const firstState = steps[0](0);
-  shown.cameraPosition.copy(firstState.camera[0]);
-  shown.cameraTarget.copy(firstState.camera[1]);
-  applyState(firstState, 1);
+  applyState(steps[0](0), 1);
   requestAnimationFrame(frame);
 }
 
