@@ -267,7 +267,7 @@ function start() {
     shown.gripperOpen += ((state.gripperOpen ?? 1) - shown.gripperOpen) * damping;
     // Every shot is framed a little wider and higher than its raw numbers, so the raised elbow stays in view.
     const cameraTarget = state.camera[1].clone().add(v(0, 0.05, 0));
-    const cameraPosition = cameraTarget.clone().addScaledVector(state.camera[0].clone().sub(state.camera[1]), 1.12);
+    const cameraPosition = cameraTarget.clone().addScaledVector(state.camera[0].clone().sub(state.camera[1]), 1.12 * framingDistanceScale);
     shown.cameraPosition.lerp(cameraPosition, damping * 0.6);
     shown.cameraTarget.lerp(cameraTarget, damping * 0.6);
 
@@ -303,6 +303,10 @@ function start() {
     camera.lookAt(shown.cameraTarget);
   }
 
+  // On narrow or portrait screens the camera pulls back so the whole scene
+  // (person, arm, bowl and sink) always fits across the width.
+  let framingDistanceScale = 1;
+  const SCENE_HALF_WIDTH_TAN = 0.4;
   function resize() {
     const width = stageElement.clientWidth;
     const height = stageElement.clientHeight;
@@ -311,9 +315,11 @@ function start() {
     // Keep the scene clear of the cards: on wide screens the cards sit on the left,
     // so shift the picture right; on phones they sit at the bottom, so shift it up.
     const narrow = width < 760;
-    camera.fov = narrow ? 62 : 32;
+    camera.fov = narrow ? 46 : 32;
+    const horizontalHalfTan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+    framingDistanceScale = Math.max(1, SCENE_HALF_WIDTH_TAN / horizontalHalfTan);
     if (narrow) camera.setViewOffset(width, height, 0, height * 0.17, width, height);
-    else camera.setViewOffset(width, height, -width * 0.14, 0, width, height);
+    else camera.setViewOffset(width, height, -width * (camera.aspect >= 1.2 ? 0.14 : 0.06), 0, width, height);
     camera.updateProjectionMatrix();
   }
 
