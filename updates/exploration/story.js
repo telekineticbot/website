@@ -4,24 +4,21 @@
 // so scrolling up and down scrubs the story in both directions.
 import * as THREE from 'three';
 import {
-  COLORS, BOWL_START, HOME, buildStudio, buildTable, buildSink, buildBowl, buildArm,
+  COLORS, HOME, buildStudio, buildTable, buildSink, buildBowl, buildArm,
   poseArm, makePath, makeTube, setTubeDrawn, seededRandom, v, clamp01, ease,
 } from './scene-parts.js';
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // Layout on the same counter as the DemoDiffusion post.
-// The task: put the orange in the bowl. The bowl sits at the far left.
-const ORANGE_START = v(0.06, 0.034, 0.3);
-const ORANGE_RESTING_HEIGHT = 0.034;
-const BOWL = BOWL_START.clone();
-const ORANGE_IN_BOWL = v(BOWL.x, 0.038, BOWL.z);
-// While the robot holds the orange, the orange sits between the lower ends of its fingers.
-const ORANGE_ABOVE_GRIPPER_TIP = 0.012;
-// How far the fingers close on the orange: just touching it.
-const GRIP_ON_ORANGE = 0.19;
-// The robot's own move comes down beside the orange, to its left, and closes on nothing.
-const HABIT_GRASP = v(ORANGE_START.x - 0.13, ORANGE_START.y, ORANGE_START.z);
+// The task: pick up the bowl.
+const BOWL = v(-0.08, 0, 0.2);
+// Where the gripper tip sits when it closes on the bowl, and how far the fingers close,
+// as in the DemoDiffusion post.
+const GRASP_HEIGHT = 0.075;
+const GRIP_ON_BOWL = 0.25;
+// The robot's own move comes down beside the bowl, to its left, and closes on nothing.
+const HABIT_GRASP = v(BOWL.x - 0.2, 0, BOWL.z);
 // The hand is turned a quarter turn from the DemoDiffusion post, so the fingers close side to side.
 const HAND_TURN = Math.PI / 2;
 // The robot's camera, on a post at the back left of the counter, looking at the table.
@@ -57,20 +54,6 @@ function start(stageElement, mode) {
   bowl.position.copy(BOWL);
   const arm = buildArm(scene);
 
-  const orange = new THREE.Mesh(
-    new THREE.SphereGeometry(0.034, 32, 24),
-    new THREE.MeshStandardMaterial({ color: 0xf08a24, roughness: 0.6 }),
-  );
-  orange.castShadow = true;
-  orange.position.copy(ORANGE_START);
-  scene.add(orange);
-  // A see-through orange in the bowl marks where the orange should end up.
-  const goalMaterial = new THREE.MeshBasicMaterial({ color: COLORS.accent, transparent: true, opacity: 0.4, depthWrite: false });
-  const goalOrange = new THREE.Mesh(new THREE.SphereGeometry(0.036, 32, 24), goalMaterial);
-  goalOrange.position.copy(ORANGE_IN_BOWL);
-  goalOrange.visible = false;
-  scene.add(goalOrange);
-
   // The robot's camera, and the box that goes over it as a blindfold.
   const robotCamera = buildRobotCamera(scene);
 
@@ -88,9 +71,8 @@ function start(stageElement, mode) {
   }
 
   // ---------- Paths ----------
-  // The hard part is the grasp. A try that misses comes down beside the orange, closes on nothing and
-  // lifts away empty. The try that works closes on the orange, carries it over and sets it in the bowl.
-  const GRASP_HEIGHT = ORANGE_START.y - ORANGE_ABOVE_GRIPPER_TIP;
+  // The hard part is the grasp. A try that misses comes down beside the bowl, closes on nothing and
+  // lifts away empty. The try that works closes on the bowl and lifts it off the table.
   function missPath(spot, approach) {
     return Object.assign(makePath([
       HOME,
@@ -98,24 +80,20 @@ function start(stageElement, mode) {
       v(spot.x, 0.27, spot.z),
       v(spot.x, GRASP_HEIGHT, spot.z),
       v(spot.x, 0.3, spot.z),
-    ], { grasp: 3, release: 4 }), { carries: false, closeSpot: v(spot.x, 0, spot.z) });
+    ], { grasp: 3, release: 4 }), { lifts: false, closeSpot: v(spot.x, 0, spot.z) });
   }
-  function graspPath(approach, carryMiddle) {
+  function graspPath(approach) {
     return Object.assign(makePath([
       HOME,
       approach,
-      v(ORANGE_START.x, 0.27, ORANGE_START.z),
-      v(ORANGE_START.x, GRASP_HEIGHT, ORANGE_START.z),
-      v(ORANGE_START.x, 0.3, ORANGE_START.z),
-      carryMiddle,
-      v(BOWL.x, 0.3, BOWL.z),
-      v(BOWL.x, ORANGE_IN_BOWL.y - ORANGE_ABOVE_GRIPPER_TIP, BOWL.z),
-      v(BOWL.x, 0.3, BOWL.z),
-    ], { grasp: 3, release: 7 }), { carries: true, closeSpot: v(ORANGE_START.x, 0, ORANGE_START.z), landing: ORANGE_IN_BOWL.clone() });
+      v(BOWL.x, 0.27, BOWL.z),
+      v(BOWL.x, GRASP_HEIGHT, BOWL.z),
+      v(BOWL.x, 0.34, BOWL.z),
+    ], { grasp: 3, release: 4 }), { lifts: true, closeSpot: v(BOWL.x, 0, BOWL.z) });
   }
 
-  // What the robot does on its own: a tidy move that comes down beside the orange and closes on nothing.
-  const habitPath = missPath(HABIT_GRASP, v(-0.03, 0.34, 0.12));
+  // What the robot does on its own: a tidy move that comes down beside the bowl and closes on nothing.
+  const habitPath = missPath(HABIT_GRASP, v(-0.2, 0.36, 0.02));
 
   // Wiggles: the same move with small random jitter added on the way down, so each try closes
   // a little off, but always near the same wrong spot.
@@ -126,7 +104,7 @@ function start(stageElement, mode) {
   const centered = () => wiggleRandom() + wiggleRandom() + wiggleRandom() - 1.5;
   const wigglePaths = [];
   for (let wiggle = 0; wiggle < WIGGLE_COUNT; wiggle += 1) {
-    // Never closer to the orange than the robot's own move, so no wiggle touches it.
+    // Never closer to the bowl than the robot's own move, so no wiggle touches it.
     const shift = v(Math.min(0.005, centered() * 0.04), 0, centered() * 0.06);
     const jitter = [];
     for (let index = 0; index <= SAMPLES; index += 1) jitter.push(v(centered(), centered() * 0.7, centered()).multiplyScalar(0.02));
@@ -143,19 +121,19 @@ function start(stageElement, mode) {
       points.push(point);
     }
     wigglePaths.push(Object.assign(makePath(points, { grasp: CLOSE_SAMPLE, release: SAMPLES }), {
-      carries: false,
+      lifts: false,
       closeSpot: HABIT_GRASP.clone().add(shift).setY(0),
     }));
   }
 
-  // Blindfolded plans: realistic moves that come at the orange from genuinely different places.
-  // Four still miss the grasp; the fifth closes on the orange and puts it in the bowl.
+  // Blindfolded plans: realistic moves that come at the bowl from genuinely different sides.
+  // Four still miss the grasp; the fifth closes on the bowl and lifts it.
   const plans = [
-    missPath(v(0.05, 0, 0.19), v(0.1, 0.38, 0.0)),
-    missPath(v(0.19, 0, 0.29), v(0.2, 0.36, 0.1)),
-    missPath(v(-0.04, 0, 0.2), v(-0.12, 0.36, 0.05)),
-    missPath(v(0.13, 0, 0.36), v(0.16, 0.3, 0.22)),
-    graspPath(v(0.13, 0.36, 0.14), v(-0.16, 0.42, 0.24)),
+    missPath(v(BOWL.x + 0.01, 0, BOWL.z - 0.2), v(BOWL.x + 0.04, 0.38, BOWL.z - 0.26)),
+    missPath(v(BOWL.x + 0.2, 0, BOWL.z), v(BOWL.x + 0.24, 0.36, BOWL.z - 0.08)),
+    missPath(v(BOWL.x + 0.14, 0, BOWL.z + 0.15), v(BOWL.x + 0.16, 0.36, BOWL.z + 0.06)),
+    missPath(v(BOWL.x - 0.13, 0, BOWL.z + 0.15), v(BOWL.x - 0.16, 0.36, BOWL.z + 0.04)),
+    graspPath(v(BOWL.x + 0.1, 0.4, BOWL.z - 0.1)),
   ];
   const SUCCESS_PLAN = plans.length - 1;
 
@@ -191,46 +169,33 @@ function start(stageElement, mode) {
   const ROUGH_SPREAD = 0.11;
 
   // ---------- One try ----------
-  // The hand pauses where it closes, so the fingers visibly close before it lifts. A try that carries
-  // the orange pauses again at the bowl while the fingers open.
+  // The hand pauses where it closes, so the fingers visibly close before it lifts.
   const PAUSE_LENGTH = 0.08;
   function pacedMotion(path, raw) {
-    const stops = path.carries ? [path.graspAt, path.releaseAt] : [path.graspAt];
-    const closedTo = path.carries ? GRIP_ON_ORANGE : 0;
-    const time = raw * (1 + stops.length * PAUSE_LENGTH);
-    const closingDone = time > stops[0] + PAUSE_LENGTH * 0.75;
-    if (time <= stops[0]) return { motion: time, gripperOpen: 1, closed: false };
-    if (time <= stops[0] + PAUSE_LENGTH) {
-      const closing = ease(clamp01((time - stops[0]) / (PAUSE_LENGTH * 0.75)));
-      return { motion: stops[0], gripperOpen: 1 + (closedTo - 1) * closing, closed: closingDone };
+    const stop = path.graspAt;
+    const closedTo = path.lifts ? GRIP_ON_BOWL : 0;
+    const time = raw * (1 + PAUSE_LENGTH);
+    if (time <= stop) return { motion: time, gripperOpen: 1, closed: false };
+    if (time <= stop + PAUSE_LENGTH) {
+      const closing = ease(clamp01((time - stop) / (PAUSE_LENGTH * 0.75)));
+      return { motion: stop, gripperOpen: 1 + (closedTo - 1) * closing, closed: time > stop + PAUSE_LENGTH * 0.75 };
     }
-    const afterClose = time - PAUSE_LENGTH;
-    if (stops.length === 1 || afterClose <= stops[1]) return { motion: Math.min(1, afterClose), gripperOpen: closedTo, closed: true };
-    if (afterClose <= stops[1] + PAUSE_LENGTH) {
-      const opening = ease(clamp01((afterClose - stops[1]) / (PAUSE_LENGTH * 0.75)));
-      return { motion: stops[1], gripperOpen: closedTo + (1 - closedTo) * opening, closed: true };
-    }
-    return { motion: Math.min(1, afterClose - PAUSE_LENGTH), gripperOpen: 1, closed: true };
+    return { motion: Math.min(1, time - PAUSE_LENGTH), gripperOpen: closedTo, closed: true };
   }
-  // A try, at progress 0 to 1: the arm runs the path and goes back to rest. The orange stays put
-  // unless the fingers actually close on it.
+  // A try, at progress 0 to 1. A miss runs the path and goes back to rest; the bowl stays put.
+  // The grasp that works lifts the bowl and holds it up.
   function tryAlong(path, progress) {
     const { motion, gripperOpen, closed } = pacedMotion(path, ease(clamp01(progress / 0.86)));
-    const goingHome = ease(clamp01((progress - 0.88) / 0.12));
+    const goingHome = path.lifts ? 0 : ease(clamp01((progress - 0.88) / 0.12));
     const gripperTip = path.curve.getPoint(motion).lerp(HOME, goingHome);
-    let orangePosition = ORANGE_START;
-    let orangeHeld = false;
-    const landed = path.carries && motion >= path.releaseAt;
-    if (path.carries && motion >= path.graspAt && !landed) { orangePosition = null; orangeHeld = true; }
-    if (landed) orangePosition = path.landing;
+    const bowlHeld = path.lifts && closed;
     return {
       gripperTip,
       gripperOpen: gripperOpen + (1 - gripperOpen) * goingHome,
-      orangePosition,
-      orangeHeld,
+      bowlHeld,
       motion,
-      landed,
-      missed: closed && !path.carries,
+      lifted: bowlHeld && motion > path.graspAt + 0.02,
+      missed: closed && !path.lifts,
     };
   }
   // A run of tries one after another inside a single step. Returns the try under way and the spots
@@ -239,7 +204,7 @@ function start(stageElement, mode) {
     const count = pathList.length;
     const index = Math.min(count - 1, Math.floor(progress * count));
     const current = tryAlong(pathList[index], progress * count - index);
-    const misses = pathList.slice(0, index).filter((path) => !path.carries).map((path) => path.closeSpot);
+    const misses = pathList.slice(0, index).filter((path) => !path.lifts).map((path) => path.closeSpot);
     if (current.missed) misses.push(pathList[index].closeSpot);
     return { index, current, misses };
   }
@@ -248,8 +213,8 @@ function start(stageElement, mode) {
   const introShot = (progress) => [v(0.42 - progress * 0.4, 1.25, 1.9), v(-0.14, 0.17, 0)];
   const mainShot = [v(0.02, 1.32, 1.82), v(-0.14, 0.17, 0.02)];
   const wideShot = [v(-0.06, 1.5, 2.1), v(-0.16, 0.22, -0.04)];
-  // Close on the orange and the wrong spot beside it.
-  const clusterShot = [v(0.04, 0.98, 1.45), v(-0.02, 0.06, 0.26)];
+  // Close on the bowl and the wrong spot beside it.
+  const clusterShot = [v(-0.12, 0.98, 1.42), v(-0.2, 0.06, 0.2)];
   // Close on the robot's camera, so the blindfold going on is easy to see.
   const blindShot = [v(-0.4, 0.54, 0.1), v(-0.58, 0.33, -0.3)];
   const planShot = [v(-0.06, 1.42, 1.95), v(-0.16, 0.2, 0.04)];
@@ -268,14 +233,11 @@ function start(stageElement, mode) {
       gripperTip: HOME.clone().add(v(0, 0.02 * Math.sin(progress * Math.PI * 2), 0)),
       camera: introShot(progress),
     }),
-    // 1. Give it a task it can't solve yet: the goal appears in the bowl, the robot reaches for the orange,
-    // and its fingers close beside it.
+    // 1. Give it a task it can't solve yet: the robot reaches for the bowl, and its fingers close beside it.
     (progress) => {
-      const showGoal = ease(clamp01(progress / 0.2));
-      const attempt = tryAlong(habitPath, clamp01((progress - 0.18) / 0.82));
+      const attempt = tryAlong(habitPath, clamp01((progress - 0.1) / 0.9));
       return {
         ...attempt,
-        goal: showGoal,
         rings: attempt.missed ? habitMiss : [],
         tubes: [[habitTube, attempt.motion]],
         camera: mainShot,
@@ -285,7 +247,6 @@ function start(stageElement, mode) {
     // from it toward other ways it could go. The camera pulls back over the whole table.
     (progress) => ({
       gripperTip: HOME.clone().add(v(0.05 * Math.sin(progress * Math.PI * 2), 0.015 * Math.sin(progress * Math.PI * 4), 0)),
-      goal: 1,
       rings: habitMiss,
       tubes: [
         [habitTube, 1, 1 - 0.5 * ease(clamp01(progress / 0.3))],
@@ -298,7 +259,6 @@ function start(stageElement, mode) {
       const run = tryRun(wigglePaths.slice(0, FIRST_WIGGLES), progress);
       return {
         ...run.current,
-        goal: 1,
         rings: [...habitMiss, ...run.misses],
         tubes: [
           [habitTube, 1, 0.35],
@@ -309,12 +269,11 @@ function start(stageElement, mode) {
       };
     },
     // 4. Wiggling rarely finds anything new: the rest of the wiggles, faster, all closing on nothing
-    // in the same place. Then the camera moves in on the cluster beside the untouched orange.
+    // in the same place. Then the camera moves in on the cluster beside the untouched bowl.
     (progress) => {
       const run = tryRun(wigglePaths.slice(FIRST_WIGGLES), clamp01(progress / 0.78));
       return {
         ...run.current,
-        goal: 1,
         rings: [...habitMiss, ...wiggleMisses.slice(0, FIRST_WIGGLES), ...run.misses],
         tubes: [[habitTube, 1, 0.35], ...wiggleTubesUpTo(run.index + FIRST_WIGGLES, run.current.motion)],
         camera: lerpShot(mainShot, clusterShot, ease(clamp01((progress - 0.55) / 0.45))),
@@ -331,7 +290,6 @@ function start(stageElement, mode) {
       const backToTable = ease(clamp01((progress - 0.58) / 0.3));
       return {
         gripperTip: HOME,
-        goal: 1,
         rings: clearing < 1 ? [...habitMiss, ...wiggleMisses] : [],
         ringFade: 1 - clearing,
         blind,
@@ -349,7 +307,6 @@ function start(stageElement, mode) {
       const drawPlans = ease(clamp01((settle - 0.55) / 0.45));
       return {
         gripperTip: HOME,
-        goal: 1,
         blind: 1,
         tubes: [[habitTube, 1, 0.05 * (1 - settle)], ...planTubes.map((tube) => [tube, drawPlans, 0.7])],
         dots: settle < 1 ? { spread: ROUGH_SPREAD, settle, fade: 1 - ease(clamp01((settle - 0.7) / 0.3)) } : null,
@@ -357,13 +314,12 @@ function start(stageElement, mode) {
       };
     },
     // 7. Many new tries, one works: the robot runs the plans quickly, one after another.
-    // Four close on nothing in new places; the fifth closes on the orange and puts it in the bowl.
+    // Four close on nothing in new places; the fifth closes on the bowl and lifts it.
     (progress) => {
       const run = tryRun(plans, clamp01(progress / 0.94));
-      const success = run.index === SUCCESS_PLAN && run.current.landed;
+      const success = run.index === SUCCESS_PLAN && run.current.lifted;
       return {
         ...run.current,
-        goal: success ? 0 : 1,
         blind: 1,
         rings: run.misses,
         successGlow: success ? 1 : 0,
@@ -459,7 +415,7 @@ function start(stageElement, mode) {
   }
 
   // The camera eases toward each shot. Poses are exact for a given progress; progress itself is eased,
-  // so the hand, its fingers and the orange always move as one.
+  // so the hand, its fingers and the bowl always move as one.
   const shown = {
     cameraPosition: v(0.15, 1.25, 1.85),
     cameraTarget: v(0, 0.17, 0),
@@ -474,14 +430,8 @@ function start(stageElement, mode) {
 
     poseArm(arm, state.gripperTip, state.gripperOpen ?? 1);
     arm.handGroup.rotation.y += HAND_TURN;
-    if (state.orangeHeld) orange.position.copy(state.gripperTip).add(v(0, ORANGE_ABOVE_GRIPPER_TIP, 0));
-    else orange.position.copy(state.orangePosition ?? ORANGE_START);
-
-    // The goal marker breathes gently so it reads as a target, not an object.
-    const goal = state.goal ?? 0;
-    goalOrange.visible = goal > 0;
-    const breathing = prefersReducedMotion.matches ? 0.5 : 0.5 + 0.5 * Math.sin(performance.now() / 420);
-    goalMaterial.opacity = (0.22 + 0.28 * breathing) * goal;
+    if (state.bowlHeld) bowl.position.copy(state.gripperTip).add(v(0, -GRASP_HEIGHT, 0));
+    else bowl.position.copy(BOWL);
 
     const landings = state.rings ?? [];
     ringMaterial.opacity = 0.42 * (state.ringFade ?? 1);
@@ -607,8 +557,8 @@ function start(stageElement, mode) {
       new IntersectionObserver((entries) => { previewVisible = entries[0].isIntersecting; }).observe(stageElement);
     }
     if (prefersReducedMotion.matches) {
-      // No looping motion: show one still frame of the robot carrying the orange to the bowl.
-      applyState(steps[7](0.86), 1);
+      // No looping motion: show one still frame of the robot lifting the bowl.
+      applyState(steps[7](0.93), 1);
       renderer.render(scene, camera);
       return;
     }
