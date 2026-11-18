@@ -66,6 +66,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 /* Each card gets its own stretch of scroll: it slides up, holds in the middle as the focus, then slides away before the next one comes. */
 .card-flow { position: relative; pointer-events: auto; max-width: 1120px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); display: grid; gap: 90vh; }
 .card-slot { min-height: 130vh; }
+/* After the last card, leave a screen of scroll so it slides fully out and the blur lifts before the stage lets go. */
+.steps > .card-flow:last-child { padding-bottom: 100vh; }
 /* The chart holds longer: its bars grow only once it has settled. */
 .card-slot:has(.chart) { min-height: 190vh; }
 .card-slot > .result-card { position: sticky; top: 12vh; }
