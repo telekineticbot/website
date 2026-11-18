@@ -36,6 +36,8 @@ const UPPER_ARM_LENGTH = 0.44;
 const FOREARM_LENGTH = 0.42;
 const GRIPPER_LENGTH = 0.13;
 const BOWL_START = new THREE.Vector3(-0.38, 0, 0.12);
+// Where the bowl sits when the robot tries, so it has to adapt the person's motion.
+const BOWL_ROBOT_START = new THREE.Vector3(-0.27, 0, 0.25);
 const SINK_CENTER = new THREE.Vector3(0.4, 0, 0.06);
 const HOME = new THREE.Vector3(0.02, 0.46, -0.12);
 const SINK_DEPTH = 0.1;
@@ -87,8 +89,11 @@ function start() {
   const bowl = buildBowl(scene);
   const arm = buildArm(scene);
 
+  const person = buildPerson(scene);
+
   // Paths
-  const taskPath = makePath([
+  // The person's demo: pick the bowl up from where it sits, carry it over, set it in the sink.
+  const demoPath = makePath([
     HOME,
     v(BOWL_START.x, 0.3, BOWL_START.z),
     v(BOWL_START.x, 0.075, BOWL_START.z),
@@ -99,39 +104,26 @@ function start() {
     v(SINK_CENTER.x, 0.3, SINK_CENTER.z),
   ], { grasp: 2, release: 6 });
 
-  // pi0.5's own cleaned-up motion: close to the demo, not a copy of it.
-  const ownPath = makePath(taskPath.points.map((point, index) => {
-    if (index === 0 || index === 2 || index === 6) return point.clone();
-    return point.clone().add(v(0.018 * Math.sin(index * 1.7), 0.02 * Math.cos(index * 1.3), 0.02 * Math.sin(index * 2.1)));
+  // The robot's version: the same motion, bent to reach the bowl where it sits now.
+  const bowlShift = BOWL_ROBOT_START.clone().sub(BOWL_START);
+  const robotPath = makePath(demoPath.points.map((point, index) => {
+    if (index >= 1 && index <= 3) return point.clone().add(bowlShift);
+    if (index === 4) return point.clone().addScaledVector(bowlShift, 0.5);
+    return point.clone();
   }), { grasp: 2, release: 6 });
 
-  const wanderPath = makePath([
-    HOME,
-    v(-0.18, 0.34, 0.02),
-    v(-0.3, 0.17, 0.24),
-    v(-0.46, 0.2, 0.02),
-    v(-0.22, 0.28, -0.04),
-    v(-0.05, 0.36, 0.2),
-    v(0.12, 0.3, 0.06),
-    v(-0.12, 0.38, -0.02),
-  ], {});
-
-  const demoTube = makeTube(scene, taskPath.curve, COLORS.accent, 0.0075);
-  const ownTube = makeTube(scene, ownPath.curve, COLORS.ink, 0.006);
-  const wanderTube = makeTube(scene, wanderPath.curve, COLORS.noise, 0.005);
-  // Noise dots: each sits at a point along a path plus a random offset.
-  const DOT_COUNT = 72;
-  const dotGeometry = new THREE.SphereGeometry(0.009, 10, 8);
-  const dotMaterial = new THREE.MeshStandardMaterial({ color: COLORS.noise, roughness: 0.5, transparent: true, opacity: 0.9 });
-  const dots = new THREE.InstancedMesh(dotGeometry, dotMaterial, DOT_COUNT);
-  dots.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  scene.add(dots);
-  const dotOffsets = [];
-  const randomGenerator = seededRandom(7);
-  for (let index = 0; index < DOT_COUNT; index += 1) {
-    dotOffsets.push(v(randomGenerator() * 2 - 1, randomGenerator() * 2 - 1, randomGenerator() * 2 - 1).normalize().multiplyScalar(0.35 + randomGenerator() * 0.65));
+  // The demo with noise added: the same route, shaken up. The robot cleans this up into its own motion.
+  const noisyPoints = [];
+  for (let index = 0; index <= 36; index++) {
+    const point = demoPath.curve.getPoint(index / 36);
+    if (index > 0 && index < 36) point.add(v(jitter(index, 1), jitter(index, 2) * 0.6, jitter(index, 3)).multiplyScalar(0.07));
+    noisyPoints.push(point);
   }
-  const dotMatrix = new THREE.Matrix4();
+  const noisyPath = makePath(noisyPoints, {});
+
+  const demoTube = makeTube(scene, demoPath.curve, COLORS.accent, 0.0075);
+  const robotTube = makeTube(scene, robotPath.curve, COLORS.ink, 0.006);
+  const noisyTube = makeTube(scene, noisyPath.curve, COLORS.noise, 0.005);
 
   // Smoothed values so jumps between steps become short motions.
   const shown = {
@@ -142,71 +134,98 @@ function start() {
     cameraTarget: v(0, 0.17, 0),
   };
 
+  const wideShot = [v(0.05, 1.45, 2.05), v(0, 0.24, -0.05)];
+
   // Each step returns what the scene should look like at progress (0 to 1).
+  const sideShot = [v(0.05, 1.35, 1.8), v(0, 0.2, 0)];
+  const missEnd = demoPath.graspAt + 0.06;
+
   const steps = [
-    // 0. The setup
+    // 0. The task: the robot puts the bowl in the sink on its own
     (progress) => ({
       gripperTip: HOME.clone().add(v(0, 0.02 * Math.sin(progress * Math.PI * 2), 0)),
       bowlPosition: BOWL_START,
+      snapBowl: true,
       camera: [v(0.55 - progress * 0.4, 1.2, 1.85), v(0, 0.17, 0)],
     }),
-    // 1. pi0.5 alone: wanders and never picks the bowl up
-    (progress) => ({
-      gripperTip: wanderPath.curve.getPoint(ease(progress)),
-      bowlPosition: BOWL_START,
-      tubes: [[wanderTube, ease(progress)]],
-      camera: [v(0.15, 1.25, 1.85), v(-0.05, 0.2, 0)],
-    }),
-    // 2. One expert demo: the orange line draws itself from the bowl to the sink
-    (progress) => ({
-      gripperTip: HOME,
-      bowlPosition: BOWL_START,
-      tubes: [[demoTube, ease(progress)]],
-      camera: [v(0.05, 1.35, 1.75), v(0, 0.2, 0)],
-    }),
-    // 3. How pi0.5 normally moves: start from random noise, clean it up
+    // 1. A person shows it once, with a handheld gripper, standing where the robot stands
     (progress) => {
-      const cleanup = ease(clamp01((progress - 0.15) / 0.75));
+      const motion = ease(clamp01((progress - 0.05) / 0.8));
+      const toolTip = demoPath.curve.getPoint(motion);
       return {
         gripperTip: HOME,
-        bowlPosition: BOWL_START,
-        dots: { path: wanderPath, spread: 0.55, cleanup, color: COLORS.noise },
-        tubes: [[wanderTube, cleanup > 0.98 ? 1 : 0]],
-        camera: [v(0.05, 1.35, 1.75), v(0, 0.2, 0)],
+        hideRobot: true,
+        person: { toolTip, toolOpen: gripOpenAlong(demoPath, motion) },
+        bowlPosition: bowlAlong(demoPath, motion, toolTip, SINK_CENTER, BOWL_IN_SINK_HEIGHT, BOWL_START),
+        snapBowl: true,
+        tubes: [[demoTube, motion]],
+        camera: wideShot,
       };
     },
-    // 4. Our change: start from the demo plus some noise
+    // 2. Next time, the bowl starts somewhere slightly different: it slides to its new spot
     (progress) => ({
       gripperTip: HOME,
-      bowlPosition: BOWL_START,
-      tubes: [[demoTube, 1, 1 - 0.65 * ease(progress)]],
-      dots: { path: taskPath, spread: 0.07 * ease(progress), cleanup: 0, color: COLORS.accent },
-      camera: [v(0.05, 1.35, 1.75), v(0, 0.2, 0)],
+      bowlPosition: BOWL_START.clone().lerp(BOWL_ROBOT_START, ease(clamp01((progress - 0.15) / 0.55))),
+      snapBowl: true,
+      tubes: [[demoTube, 1]],
+      camera: sideShot,
     }),
-    // 5. pi0.5 cleans that up into its own motion and does the task
+    // 3. Copying the demo exactly: the gripper closes where the bowl used to be, and misses
     (progress) => {
-      const cleanup = ease(clamp01(progress / 0.3));
-      const motion = ease(clamp01((progress - 0.3) / 0.65));
-      const pathPoint = ownPath.curve.getPoint(motion);
+      const motion = ease(clamp01(progress / 0.75)) * missEnd;
       return {
-        gripperTip: pathPoint,
-        bowlPosition: bowlAlong(ownPath, motion, pathPoint, SINK_CENTER, BOWL_IN_SINK_HEIGHT),
-        gripperOpen: gripOpenAlong(ownPath, motion),
-        tubes: [[demoTube, 1, 0.35], [ownTube, cleanup]],
-        dots: cleanup < 1 ? { path: ownPath, spread: 0.07, cleanup, color: COLORS.accent, fade: 1 - cleanup } : null,
+        gripperTip: demoPath.curve.getPoint(motion),
+        gripperOpen: gripOpenAlong(demoPath, motion),
+        bowlPosition: BOWL_ROBOT_START,
+        snapBowl: true,
+        tubes: [[demoTube, 1]],
+        camera: sideShot,
+      };
+    },
+    // 4. We add noise to the demo: a shaken-up copy of the route appears
+    (progress) => ({
+      gripperTip: HOME,
+      bowlPosition: BOWL_ROBOT_START,
+      snapBowl: true,
+      tubes: [[demoTube, 1, 1 - 0.6 * ease(progress)], [noisyTube, ease(clamp01(progress / 0.85))]],
+      camera: sideShot,
+    }),
+    // 5. The robot cleans it up into a smooth motion that bends to the bowl's new spot
+    (progress) => ({
+      gripperTip: HOME,
+      bowlPosition: BOWL_ROBOT_START,
+      snapBowl: true,
+      tubes: [[demoTube, 1, 0.4], [noisyTube, 1, 1 - ease(progress)], [robotTube, ease(clamp01(progress / 0.85))]],
+      camera: sideShot,
+    }),
+    // 6. The bowl goes in the sink, and the arm goes back to rest
+    (progress) => {
+      const motion = ease(clamp01((progress - 0.05) / 0.65));
+      const goingHome = ease(clamp01((progress - 0.72) / 0.2));
+      const pathPoint = robotPath.curve.getPoint(motion);
+      return {
+        gripperTip: pathPoint.clone().lerp(HOME, goingHome),
+        bowlPosition: bowlAlong(robotPath, motion, pathPoint, SINK_CENTER, BOWL_IN_SINK_HEIGHT, BOWL_ROBOT_START),
+        gripperOpen: gripOpenAlong(robotPath, motion),
+        tubes: [[demoTube, 1, 0.4], [robotTube, 1]],
         camera: [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)],
       };
     },
   ];
 
-  const allTubes = [demoTube, ownTube, wanderTube];
+
+  const allTubes = [demoTube, robotTube, noisyTube];
 
   function currentStoryPosition() {
     const viewportMiddle = window.innerHeight * 0.55;
     for (let index = 0; index < stepElements.length; index += 1) {
       const box = stepElements[index].getBoundingClientRect();
       if (box.bottom > viewportMiddle) {
-        const progress = clamp01((viewportMiddle - box.top) / box.height);
+        // The last step must finish while the stage is still on screen: the stage
+        // starts scrolling away when that step's bottom reaches the bottom of the screen.
+        const isLast = index === stepElements.length - 1;
+        const span = isLast ? box.height - (window.innerHeight - viewportMiddle) : box.height;
+        const progress = clamp01((viewportMiddle - box.top) / span);
         return { stepIndex: index, progress };
       }
     }
@@ -222,7 +241,8 @@ function start() {
 
   function applyState(state, damping) {
     shown.gripperTip.lerp(state.gripperTip, damping);
-    shown.bowlPosition.lerp(state.bowlPosition, damping);
+    if (state.snapBowl) shown.bowlPosition.copy(state.bowlPosition);
+    else shown.bowlPosition.lerp(state.bowlPosition, damping);
     shown.gripperOpen += ((state.gripperOpen ?? 1) - shown.gripperOpen) * damping;
     // Every shot is framed a little wider and higher than its raw numbers, so the raised elbow stays in view.
     const cameraTarget = state.camera[1].clone().add(v(0, 0.05, 0));
@@ -231,31 +251,17 @@ function start() {
     shown.cameraTarget.lerp(cameraTarget, damping * 0.6);
 
     poseArm(arm, shown.gripperTip, shown.gripperOpen);
+    arm.meshes.forEach((mesh) => { mesh.visible = !state.hideRobot; });
+    arm.handGroup.visible = !state.hideRobot;
     bowl.position.copy(shown.bowlPosition);
+    person.group.visible = Boolean(state.person);
+    if (state.person) posePerson(person, state.person.toolTip, state.person.toolOpen);
 
     allTubes.forEach((tube) => { tube.mesh.visible = false; });
     for (const [tube, amount, opacity] of state.tubes ?? []) {
       setTubeDrawn(tube, amount);
       tube.material.opacity = (opacity ?? 1) * tube.baseOpacity;
     }
-
-    if (state.dots) {
-      dots.visible = true;
-      dotMaterial.color.setHex(state.dots.color);
-      dotMaterial.opacity = 0.9 * (state.dots.fade ?? 1);
-      for (let index = 0; index < DOT_COUNT; index += 1) {
-        const along = state.dots.path.curve.getPoint(index / (DOT_COUNT - 1));
-        const noisy = along.clone().addScaledVector(dotOffsets[index], state.dots.spread);
-        const position = noisy.lerp(along, state.dots.cleanup);
-        position.y = Math.max(position.y, 0.015);
-        dotMatrix.makeTranslation(position.x, position.y, position.z);
-        dots.setMatrixAt(index, dotMatrix);
-      }
-      dots.instanceMatrix.needsUpdate = true;
-    } else {
-      dots.visible = false;
-    }
-
 
     camera.position.copy(shown.cameraPosition);
     camera.lookAt(shown.cameraTarget);
@@ -432,7 +438,49 @@ function buildArm(scene) {
     mesh.castShadow = true;
   }
   scene.add(pedestal, parts.shoulder, parts.elbow, parts.wrist, parts.upperArm, parts.forearm, parts.handGroup);
+  parts.meshes = [pedestal, parts.shoulder, parts.elbow, parts.wrist, parts.upperArm, parts.forearm];
   return parts;
+}
+
+// A simple person standing behind the counter, holding a handheld gripper.
+function buildPerson(scene) {
+  const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xd9cbb8, roughness: 0.7 });
+  const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0x6f7a86, roughness: 0.8 });
+  const toolMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a25, roughness: 0.45 });
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.62, 8, 24), shirtMaterial);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 24), skinMaterial);
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.03, 1, 20), shirtMaterial);
+  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.034, 20, 16), skinMaterial);
+  const tool = new THREE.Group();
+  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.03), toolMaterial);
+  handle.position.y = 0.09;
+  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.025, 0.04), toolMaterial);
+  palm.position.y = 0.035;
+  const leftFinger = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.06, 0.03), toolMaterial);
+  const rightFinger = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.06, 0.03), toolMaterial);
+  tool.add(handle, palm, leftFinger, rightFinger);
+  group.add(body, head, arm, hand, tool);
+  for (const mesh of [body, head, arm, hand, handle, palm, leftFinger, rightFinger]) mesh.castShadow = true;
+  group.visible = false;
+  scene.add(group);
+  return { group, body, head, arm, hand, tool, leftFinger, rightFinger };
+}
+
+// The person stays behind the counter and leans along with their hand; one arm reaches the tool.
+function posePerson(person, toolTip, toolOpen) {
+  const bodyX = clamp(toolTip.x * 0.6, -0.32, 0.32);
+  const bodyZ = -0.72;
+  person.body.position.set(bodyX, 0.12, bodyZ);
+  person.head.position.set(bodyX, 0.66, bodyZ + 0.02);
+  const shoulder = v(bodyX + (toolTip.x >= bodyX ? 0.13 : -0.13), 0.4, bodyZ + 0.05);
+  const grip = toolTip.clone().add(v(0, 0.15, 0));
+  placeBetween(person.arm, shoulder, grip);
+  person.hand.position.copy(grip);
+  person.tool.position.copy(toolTip);
+  const gap = 0.025 + 0.04 * toolOpen;
+  person.leftFinger.position.set(-gap, 0, 0);
+  person.rightFinger.position.set(gap, 0, 0);
 }
 
 // Place the arm so the gripper tip reaches the target, using two-link inverse kinematics.
@@ -509,8 +557,8 @@ function setTubeDrawn(tube, amount) {
 
 // Where the bowl is while the gripper moves along a path: on the table before the grasp,
 // in the gripper while carrying, and at the destination after the release.
-function bowlAlong(path, motion, gripperTip, destination, restingHeight) {
-  if (path.graspAt === null || motion < path.graspAt) return BOWL_START;
+function bowlAlong(path, motion, gripperTip, destination, restingHeight, startPosition) {
+  if (path.graspAt === null || motion < path.graspAt) return startPosition;
   if (motion < path.releaseAt) return gripperTip.clone().add(v(0, -0.055, 0));
   return v(destination.x, restingHeight, destination.z);
 }
@@ -524,14 +572,13 @@ function gripOpenAlong(path, motion) {
 
 // ---------- Small helpers ----------
 
+// Repeatable pseudo random offset in -1..1, so the noisy line looks the same on every visit.
+function jitter(index, channel) {
+  const value = Math.sin(index * 12.9898 + channel * 78.233) * 43758.5453;
+  return (value - Math.floor(value)) * 2 - 1;
+}
+
 function v(x, y, z) { return new THREE.Vector3(x, y, z); }
 function clamp(value, low, high) { return Math.min(high, Math.max(low, value)); }
 function clamp01(value) { return clamp(value, 0, 1); }
 function ease(value) { return value * value * (3 - 2 * value); }
-function seededRandom(seed) {
-  let state = seed;
-  return () => {
-    state = (state * 16807) % 2147483647;
-    return (state - 1) / 2147483646;
-  };
-}

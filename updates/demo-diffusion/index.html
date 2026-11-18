@@ -47,8 +47,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <article>
   <section class="intro">
     <h1>One demo. <em>No retraining.</em></h1>
-    <p class="dek">We showed a frozen robot model one example of a task, with no training.</p>
-    <p class="byline"><span>Research by Vrishabh Kenkre</span><span><time datetime="2026-11-17">November 17, 2026</time></span></p>
+    <p class="dek">We're testing the limits of DemoDiffusion: can one demo teach a frozen robot model a new task, with no training?</p>
+    <p class="byline"><span>Research by Vrishabh Kenkre</span><span>Inspired by <a href="#citations">DemoDiffusion</a></span><span><time datetime="2026-11-17">November 17, 2026</time></span></p>
     <a class="scroll-caret" href="#story" aria-label="Scroll down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   </section>
 
@@ -57,80 +57,111 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <canvas aria-hidden="true"></canvas>
       <p class="stage-fallback">This animation needs WebGL. The steps below tell the same story.</p>
       <div class="stage-legend" aria-hidden="true">
-        <span><i style="background:#ff7122"></i>Expert demo</span>
+        <span><i style="background:#ff7122"></i>Person's demo</span>
+        <span><i style="background:#6f6f68"></i>Demo plus noise</span>
         <span><i style="background:#14140f"></i>Robot's motion</span>
-        <span><i style="background:#6f6f68"></i>Noise</span>
       </div>
     </div>
 
     <div class="steps">
-      <div class="step"><div class="card"><p class="phrase">Task: bowl into the sink.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">On its own, it wanders.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">One expert demo.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">Normal start: pure noise.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">Our start: demo plus noise.</p></div></div>
-      <div class="step"><div class="card"><p class="phrase">Then it does the task.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Task: robot puts bowl in sink.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">A person shows it once.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Next time, the bowl moves.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">Copying the demo misses it.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">We add noise to the demo.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The robot cleans it up to fit.</p></div></div>
+      <div class="step"><div class="card"><p class="phrase">The bowl goes in the sink.</p></div></div>
     </div>
   </section>
 
-  <section class="section" aria-labelledby="clips-title">
-    <h2 id="clips-title">In simulation</h2>
-    <p>Runs from the simulated kitchen. The labels on the videos come from our research notes.</p>
-    <div class="clips">
-      <figure class="wide">
-        <video src="media/demo-path-overlay.mp4" poster="media/demo-path-overlay.jpg" muted loop playsinline controls preload="none"></video>
-        <figcaption>The yellow line is the expert demo's path. The blue line is where the robot's hand goes. It follows the demo, adapted to where the bowl is.</figcaption>
-      </figure>
-      <figure>
-        <video src="media/alone-vs-demo.mp4" poster="media/alone-vs-demo.jpg" muted loop playsinline controls preload="none"></video>
-        <figcaption>Same scene, side by side. Left: pi0.5 on its own. Right: with one demo.</figcaption>
-      </figure>
+  <section class="section" aria-labelledby="results-title">
+    <h2 id="results-title">Results</h2>
+    <p>The same frozen pi0.5 in the same simulated kitchen, with and without one demo. Object positions change on every try.</p>
+    <figure class="sbs">
+      <div class="sbs-labels" aria-hidden="true"><span>pi0.5 on its own</span><span>pi0.5 with one demo</span></div>
+      <video src="media/alone-vs-demo.mp4" poster="media/alone-vs-demo.jpg" muted loop playsinline controls preload="none"></video>
+      <figcaption>One scene, side by side. The labels on the video come from our research notes.</figcaption>
+    </figure>
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead><tr><th scope="col">Task</th><th scope="col">pi0.5 on its own</th><th scope="col">pi0.5 with one demo</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Bowl into sink</th><td>0 of 16</td><td class="win">10 of 16</td></tr>
+          <tr><th scope="row">Orange into bowl</th><td>0 of 49</td><td class="win">8 of 49</td></tr>
+          <tr><th scope="row">Apple onto plate</th><td>0 of 16</td><td class="win">3 of 16</td></tr>
+          <tr><th scope="row">Stack a block</th><td>0 of 16</td><td class="win">3 of 16</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fine">Successful tries out of total. Best setting for each task.</p>
+  </section>
+
+  <section class="section" aria-labelledby="limits-title">
+    <h2 id="limits-title">Limitations</h2>
+    <div class="limits">
       <figure>
         <video src="media/wrong-demo.mp4" poster="media/wrong-demo.jpg" muted loop playsinline controls preload="none"></video>
-        <figcaption>The wrong demo: asked to put the orange in the bowl, but shown a demo of a different task, it follows the demo.</figcaption>
+        <figcaption>Asked to put the orange in the bowl, but shown a demo of a different task, it does the demo's task.</figcaption>
       </figure>
+      <ul class="plain-list">
+        <li><strong>It copies the demo, not the goal.</strong> With a demo from another task, orange into bowl went 0 of 8.</li>
+        <li><strong>Gains are uneven.</strong> Bowl into sink works most of the time. The other three tasks succeed far less often.</li>
+        <li><strong>Every new task needs its own demo.</strong> Nothing is learned for next time.</li>
+        <li><strong>Simulation only, and small.</strong> 16 tries per setting, 49 for orange into bowl.</li>
+      </ul>
     </div>
   </section>
 
-  <section class="section" aria-labelledby="details-title">
-    <h2 id="details-title">The details</h2>
+  <section class="section" aria-labelledby="next-title">
+    <h2 id="next-title">Future extensions</h2>
+    <p>Directions we plan to try next. No results yet.</p>
+    <ul class="plain-list">
+      <li><strong>Exploration.</strong> Let the robot try variations of the demo on its own, so it finds what works beyond one example.</li>
+      <li><strong>Reinforcement learning.</strong> Use those tries to train the skill into the model, so it no longer needs a demo.</li>
+    </ul>
+  </section>
+
+  <section class="section" aria-labelledby="citations">
+    <h2 id="citations">Citations</h2>
+    <ol class="refs">
+      <li>Sungjae Park, Homanga Bharadhwaj, Shubham Tulsiani. <a href="https://arxiv.org/abs/2506.20668">DemoDiffusion: One-Shot Human Imitation using pre-trained Diffusion Policy</a>. arXiv 2506.20668, 2025. The inspiration for this work.</li>
+      <li>Physical Intelligence, Kevin Black, Noah Brown, et al. <a href="https://arxiv.org/abs/2504.16054">&pi;<sub>0.5</sub>: a Vision-Language-Action Model with Open-World Generalization</a>. arXiv 2504.16054, 2025. The robot model we used.</li>
+    </ol>
+  </section>
+
+  <section class="section appendix" aria-labelledby="appendix-title">
+    <h2 id="appendix-title">Appendix</h2>
     <div class="details">
-      <div>
-        <h3>Results</h3>
-        <ul>
-          <li>Bowl into sink: 0 to 10 of 16.</li>
-          <li>Orange into bowl: 0 to 8 of 49.</li>
-          <li>Apple onto plate: 0 to 3 of 16.</li>
-          <li>Stack a block: 0 to 3 of 16.</li>
-          <li>Wrong demo: 0 of 8.</li>
-        </ul>
-      </div>
       <div>
         <h3>Setup</h3>
         <ul>
           <li>Kitchen scenes in Isaac Lab Arena, with a Franka arm.</li>
           <li>Object positions are random on every try.</li>
-          <li>In the demo runs, pi0.5's weights never change.</li>
+          <li>pi0.5's weights never change in the demo runs.</li>
           <li>16 tries per setting. 49 for orange into bowl.</li>
+          <li>Our demos were recorded robot runs. The animation shows a person to explain the idea.</li>
         </ul>
       </div>
       <div>
         <h3>How the demo is used</h3>
         <ul>
           <li>We fit the demo's path to where the objects are in this try.</li>
-          <li>pi0.5 starts from that path plus noise, instead of from pure noise.</li>
-          <li>A variant also nudges each cleanup step toward the demo. On bowl into sink: 9 of 16 without the nudge, 10 of 16 with it.</li>
+          <li>pi0.5 normally builds each motion out of random noise, step by step.</li>
+          <li>Here it starts from the fitted demo path with some noise added, then finishes the motion as usual.</li>
         </ul>
       </div>
       <div>
-        <h3>What we take from it</h3>
+        <h3>The nudge variant</h3>
         <ul>
-          <li>One demo can unlock a task the model has never done.</li>
-          <li>It copies the demo, so the demo has to be the right one.</li>
-          <li>The wrong demo test was on orange into bowl, with a demo from another task.</li>
+          <li>A variant also nudges each step of that process toward the demo.</li>
+          <li>On bowl into sink: 9 of 16 without the nudge, 10 of 16 with it.</li>
         </ul>
       </div>
     </div>
+    <figure class="appendix-clip">
+      <video src="media/demo-path-overlay.mp4" poster="media/demo-path-overlay.jpg" muted loop playsinline controls preload="none"></video>
+      <figcaption>The yellow line is the demo's path. The blue line is where the robot's hand goes. It follows the demo, adapted to where the bowl is.</figcaption>
+    </figure>
   </section>
 </article>
 
