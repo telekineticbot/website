@@ -158,6 +158,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .site-footer p { margin: 0; }
 
 /* Updates list */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.post-list-section { padding-top: 56px; padding-bottom: 96px; }
 .post-list { list-style: none; padding: 0; margin: 0; max-width: 760px; }
 .post-list li { border-top: 1px solid var(--ink-faint); }
 .post-list li:last-child { border-bottom: 1px solid var(--ink-faint); }
