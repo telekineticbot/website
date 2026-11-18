@@ -29,16 +29,24 @@ if (previewStage) start(previewStage, 'loop');
 function start(stageElement, mode) {
   const canvas = stageElement.querySelector('canvas');
   const dimLayer = stageElement.querySelector('.stage-dim');
-  const resultsFlow = mode === 'scroll' ? document.querySelector('.results-flow') : null;
+  const cardFlows = mode === 'scroll' ? [...document.querySelectorAll('.card-flow')] : [];
   let shownDim = -1;
-  // While the result cards are on screen, blur and darken the animation so the results stand out.
-  function updateDim() {
-    if (!resultsFlow || !dimLayer) return;
-    const box = resultsFlow.getBoundingClientRect();
+  // While cards are on screen, blur and darken the animation so the cards stand out.
+  // The dim builds as the first card slides in, is full only once that card is fully in,
+  // holds while the cards pass, and lifts as the last card leaves.
+  function dimForFlow(flow) {
+    const cards = flow.querySelectorAll('.result-card');
+    if (!cards.length) return 0;
     const viewportHeight = window.innerHeight;
-    const comingIn = clamp01((viewportHeight - box.top) / (viewportHeight * 0.5));
-    const goingOut = clamp01((box.bottom - viewportHeight * 0.3) / (viewportHeight * 0.5));
-    const dim = Math.round(Math.min(comingIn, goingOut) * 100) / 100;
+    const firstBox = cards[0].getBoundingClientRect();
+    const lastBox = cards[cards.length - 1].getBoundingClientRect();
+    const comingIn = clamp01((viewportHeight - firstBox.top) / Math.min(firstBox.height, viewportHeight));
+    const goingOut = clamp01(lastBox.bottom / (viewportHeight * 0.6));
+    return Math.min(comingIn, goingOut);
+  }
+  function updateDim() {
+    if (!cardFlows.length || !dimLayer) return;
+    const dim = Math.round(Math.max(...cardFlows.map(dimForFlow)) * 100) / 100;
     if (dim === shownDim) return;
     shownDim = dim;
     dimLayer.style.opacity = String(0.45 * dim);
