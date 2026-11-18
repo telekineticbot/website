@@ -19,8 +19,13 @@ const GOAL_BOWL = BOWL_START.clone();
 const SMALL_BOWL_START = v(0.06, 0, 0.27);
 const ORANGE_SPOT = v(-0.12, 0.034, 0.3);
 const SMALL_BOWL_NESTED_HEIGHT = 0.018;
-// Where the orange rests inside the big bowl, for the beat that shows what we asked for.
-const ORANGE_IN_BOWL = v(GOAL_BOWL.x, 0.045, GOAL_BOWL.z);
+// Where the orange rests inside the big bowl, for the beat that shows what we asked for:
+// touching the bottom of the bowl, not floating above it.
+const ORANGE_IN_BOWL = v(GOAL_BOWL.x, 0.038, GOAL_BOWL.z);
+// While the robot holds the orange, the orange sits between the lower ends of its fingers.
+const ORANGE_ABOVE_GRIPPER_TIP = 0.012;
+// How far the fingers close on the orange: just touching it.
+const GRIP_ON_ORANGE = 0.19;
 // Next time, the small bowl and the orange start somewhere slightly different.
 const SMALL_BOWL_MOVED = v(0.12, 0, 0.16);
 const ORANGE_MOVED = v(-0.02, 0.034, 0.43);
@@ -167,17 +172,38 @@ function start(stageElement, mode) {
   const orangePath = makePath([
     HOME,
     v(ORANGE_SPOT.x, 0.28, ORANGE_SPOT.z),
-    v(ORANGE_SPOT.x, 0.06, ORANGE_SPOT.z),
+    v(ORANGE_SPOT.x, ORANGE_SPOT.y - ORANGE_ABOVE_GRIPPER_TIP, ORANGE_SPOT.z),
     v(ORANGE_SPOT.x, 0.28, ORANGE_SPOT.z),
     v(-0.25, 0.36, 0.2),
     v(GOAL_BOWL.x, 0.28, GOAL_BOWL.z),
-    v(GOAL_BOWL.x, 0.08, GOAL_BOWL.z),
+    v(GOAL_BOWL.x, ORANGE_IN_BOWL.y - ORANGE_ABOVE_GRIPPER_TIP, GOAL_BOWL.z),
     v(GOAL_BOWL.x, 0.3, GOAL_BOWL.z),
   ], { grasp: 2, release: 6 });
+  // The orange is on the table until the fingers close on it, in the hand while carried,
+  // and in the bowl once the fingers open. Grasp and release points line up exactly, so it never jumps.
   function orangeAlong(motion, gripperTip) {
     if (motion < orangePath.graspAt) return ORANGE_SPOT;
-    if (motion < orangePath.releaseAt) return gripperTip.clone().add(v(0, -0.028, 0));
+    if (motion < orangePath.releaseAt) return gripperTip.clone().add(v(0, ORANGE_ABOVE_GRIPPER_TIP, 0));
     return ORANGE_IN_BOWL;
+  }
+  // The hand pauses for a moment at the grasp and at the release. During the first pause the fingers
+  // close on the orange before it lifts; during the second they open before the hand leaves the bowl.
+  const ORANGE_PAUSE_LENGTH = 0.07;
+  function orangeBeat(rawMotion) {
+    const stops = [orangePath.graspAt, orangePath.releaseAt];
+    const time = rawMotion * (1 + stops.length * ORANGE_PAUSE_LENGTH);
+    if (time <= stops[0]) return { motion: time, gripperOpen: 1 };
+    if (time <= stops[0] + ORANGE_PAUSE_LENGTH) {
+      const closing = ease(clamp01((time - stops[0]) / (ORANGE_PAUSE_LENGTH * 0.75)));
+      return { motion: stops[0], gripperOpen: 1 + (GRIP_ON_ORANGE - 1) * closing };
+    }
+    const afterGrasp = time - ORANGE_PAUSE_LENGTH;
+    if (afterGrasp <= stops[1]) return { motion: afterGrasp, gripperOpen: GRIP_ON_ORANGE };
+    if (afterGrasp <= stops[1] + ORANGE_PAUSE_LENGTH) {
+      const opening = ease(clamp01((afterGrasp - stops[1]) / (ORANGE_PAUSE_LENGTH * 0.75)));
+      return { motion: stops[1], gripperOpen: GRIP_ON_ORANGE + (1 - GRIP_ON_ORANGE) * opening };
+    }
+    return { motion: Math.min(1, afterGrasp - ORANGE_PAUSE_LENGTH), gripperOpen: 1 };
   }
   // An object hops in an arc, with no hand: the orange showing where we want it, or a bowl going back to its spot.
   function hopBetween(from, to, amount) {
@@ -203,7 +229,10 @@ function start(stageElement, mode) {
   const shown = {
     gripperTip: HOME.clone(),
     bowlPosition: BOWL_START.clone(),
+    orangePosition: ORANGE_SPOT.clone(),
     gripperOpen: 1,
+    smoothedStepIndex: -1,
+    smoothedProgress: 0,
     cameraPosition: v(0.15, 1.25, 1.85),
     cameraTarget: v(0, 0.17, 0),
   };
@@ -313,19 +342,21 @@ function start(stageElement, mode) {
       };
     },
     // Limitations 2. What we ask for: the robot puts the orange in the bowl, then goes back to rest.
-    (progress) => {
-      const motion = ease(clamp01((progress - 0.05) / 0.7));
+    Object.assign((progress) => {
+      const { motion, gripperOpen } = orangeBeat(ease(clamp01((progress - 0.05) / 0.7)));
       const goingHome = ease(clamp01((progress - 0.76) / 0.2));
       const pathPoint = orangePath.curve.getPoint(motion);
       return {
+        // The hand, its fingers and the orange are all placed from one smoothed progress, so they move as one.
+        exactPose: true,
         gripperTip: pathPoint.clone().lerp(HOME, goingHome),
-        gripperOpen: gripOpenAlong(orangePath, motion),
+        gripperOpen,
         bowlPosition: GOAL_BOWL,
         snapBowl: true,
         limits: { smallBowlPosition: SMALL_BOWL_START, orangePosition: orangeAlong(motion, pathPoint), goal: 0 },
         camera: limitsShot,
       };
-    },
+    }, { isOrangeBeat: true }),
     // Limitations 3. The orange hops back out, leaving a see-through marker of what we asked for.
     // Then the demo shows a different task: a person nests the small bowl in the big one.
     (progress) => {
@@ -420,6 +451,8 @@ function start(stageElement, mode) {
       camera: [limitsShot[0].clone().lerp(limitsCloseShot[0], ease(progress)), limitsShot[1].clone().lerp(limitsCloseShot[1], ease(progress))],
     }),
   ];
+  const ORANGE_STEP_INDEX = steps.findIndex((step) => step.isOrangeBeat);
+
 
 
   const allTubes = [demoTube, robotTube, wrongDemoTube, wrongRobotTube];
@@ -517,10 +550,12 @@ function start(stageElement, mode) {
     const switchingScene = sceneName !== shownSceneName;
     shownSceneName = sceneName;
     if (switchingScene) damping = 1;
-    shown.gripperTip.lerp(state.gripperTip, damping);
+    // A step that smooths its own progress gives an exact pose; easing it again would let the parts drift apart.
+    const poseDamping = state.exactPose ? 1 : damping;
+    shown.gripperTip.lerp(state.gripperTip, poseDamping);
     if (state.snapBowl) shown.bowlPosition.copy(state.bowlPosition);
     else shown.bowlPosition.lerp(state.bowlPosition, damping);
-    shown.gripperOpen += ((state.gripperOpen ?? 1) - shown.gripperOpen) * damping;
+    shown.gripperOpen += ((state.gripperOpen ?? 1) - shown.gripperOpen) * poseDamping;
     // Every shot is framed a little wider and higher than its raw numbers, so the raised elbow stays in view.
     const cameraTarget = state.camera[1].clone().add(v(0, 0.05, 0));
     const cameraPosition = cameraTarget.clone().addScaledVector(state.camera[0].clone().sub(state.camera[1]), 1.12 * framingDistanceScale);
@@ -556,7 +591,9 @@ function start(stageElement, mode) {
     goalOrange.visible = limits.goal > 0;
     {
       smallBowl.position.copy(limits.smallBowlPosition);
-      orange.position.copy(limits.orangePosition ?? ORANGE_SPOT);
+      // The orange eases toward its target at the same rate as the hand, so a held orange stays in the fingers.
+      shown.orangePosition.lerp(limits.orangePosition ?? ORANGE_SPOT, poseDamping);
+      orange.position.copy(shown.orangePosition);
       // The goal marker breathes gently so it reads as a target, not an object.
       const breathing = prefersReducedMotion.matches ? 0.5 : 0.5 + 0.5 * Math.sin(performance.now() / 420);
       goalMaterial.opacity = (0.22 + 0.28 * breathing) * limits.goal;
@@ -636,8 +673,16 @@ function start(stageElement, mode) {
       updateDim();
       position = { stepIndex: position.stepIndex, progress: animationProgress(position.progress) };
     }
-    const state = steps[Math.min(position.stepIndex, steps.length - 1)](position.progress);
     const damping = prefersReducedMotion.matches ? 1 : 1 - Math.exp(-elapsedSeconds * 9);
+    const stepIndex = Math.min(position.stepIndex, steps.length - 1);
+    // The orange beat eases its progress instead of its positions, at the same rate, so it feels the same.
+    if (stepIndex === ORANGE_STEP_INDEX && shown.smoothedStepIndex === stepIndex) {
+      shown.smoothedProgress += (position.progress - shown.smoothedProgress) * damping;
+    } else {
+      shown.smoothedProgress = position.progress;
+    }
+    shown.smoothedStepIndex = stepIndex;
+    const state = steps[stepIndex](stepIndex === ORANGE_STEP_INDEX ? shown.smoothedProgress : position.progress);
     applyState(state, damping);
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
