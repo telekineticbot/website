@@ -69,8 +69,9 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 .result-card > p { margin: -8px 0 0; max-width: 60ch; }
 .result-card .chart { background: none; border: 0; border-radius: 0; padding: 0; }
 /* Step text sits straight on the scene, with no box behind it. */
-.card { pointer-events: auto; max-width: 16em; color: var(--ink); }
-.card .phrase { font: 700 clamp(24px, 2.6vw, 34px)/1.12 var(--display); letter-spacing: -.025em; text-wrap: balance; }
+/* One line per step. The story script shrinks a line's type only if it would not fit the screen. */
+.card { pointer-events: auto; color: var(--ink); white-space: nowrap; }
+.card .phrase { font: 700 30px/1.12 var(--display); letter-spacing: -.025em; }
 .card p { margin: 0; font-size: 20px; line-height: 1.35; letter-spacing: -.01em; }
 .card p + p { margin-top: 10px; }
 .card .stat { font: 700 44px/1 var(--display); letter-spacing: -.03em; margin-top: 14px; }
@@ -184,8 +185,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 @media (max-width: 760px) {
   /* The 3D stage sits in the top part of the screen; the cards scroll through the bottom. */
   .paced .step .card { top: auto; bottom: 7vh; left: 20px; right: 20px; }
-  .card { max-width: none; }
-  .card .phrase { font-size: min(24px, 6.2vw); }
+  .card .phrase { font-size: 24px; }
   .card .stat { font-size: 36px; }
     .post-list a { grid-template-columns: minmax(0, 42%) 1fr; gap: 14px; padding: 16px 0; }
   .site-footer-inner { flex-direction: column; gap: 8px; }

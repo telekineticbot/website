@@ -181,6 +181,8 @@ function start(stageElement, mode) {
   const sideShot = [v(0.05, 1.35, 1.8), v(0, 0.2, 0)];
   const missEnd = demoPath.graspAt + 0.06;
   const limitsShot = [v(-0.02, 1.3, 1.75), v(-0.05, 0.15, 0.1)];
+  const limitsWideShot = [v(0.35, 1.75, 2.3), v(-0.05, 0.12, 0.1)];
+  const limitsCloseShot = [v(-0.1, 0.95, 1.25), v(-0.06, 0.08, 0.22)];
 
   const steps = [
     // 0. The task: the robot puts the bowl in the sink on its own
@@ -260,16 +262,25 @@ function start(stageElement, mode) {
         camera: [v(0.2, 1.2, 1.7), v(0.02, 0.18, 0)],
       };
     },
-    // Limitations 1. A new task: the orange goes in the bowl. The goal shows as a see-through orange.
-    () => ({
+    // Limitations 1. The camera settles on a new scene: a big bowl, a small bowl and an orange.
+    (progress) => ({
       scene: 'limits',
       gripperTip: HOME,
       bowlPosition: GOAL_BOWL,
       snapBowl: true,
-      limits: { smallBowlPosition: SMALL_BOWL_START, goal: 1 },
+      limits: { smallBowlPosition: SMALL_BOWL_START, goal: 0 },
+      camera: [limitsWideShot[0].clone().lerp(limitsShot[0], ease(progress)), limitsWideShot[1].clone().lerp(limitsShot[1], ease(progress))],
+    }),
+    // Limitations 2. What we ask for: the orange in the bowl. The goal fades in as a see-through orange.
+    (progress) => ({
+      scene: 'limits',
+      gripperTip: HOME,
+      bowlPosition: GOAL_BOWL,
+      snapBowl: true,
+      limits: { smallBowlPosition: SMALL_BOWL_START, goal: ease(clamp01(progress / 0.8)) },
       camera: limitsShot,
     }),
-    // Limitations 2. The demo shows a different task: nesting the small bowl in the big one.
+    // Limitations 3. The demo shows a different task: nesting the small bowl in the big one.
     (progress) => {
       const motion = ease(clamp01((progress - 0.05) / 0.8));
       const toolTip = wrongDemoPath.curve.getPoint(motion);
@@ -285,7 +296,7 @@ function start(stageElement, mode) {
         camera: limitsShot,
       };
     },
-    // Limitations 3. The robot follows the demo anyway: it nests the bowl and leaves the orange.
+    // Limitations 4. The robot follows the demo anyway: it nests the bowl and leaves the orange.
     (progress) => {
       const motion = ease(clamp01((progress - 0.05) / 0.65));
       const goingHome = ease(clamp01((progress - 0.72) / 0.2));
@@ -301,6 +312,16 @@ function start(stageElement, mode) {
         camera: limitsShot,
       };
     },
+    // Limitations 5. The result: the bowls are stacked and the orange is still out. The camera moves in on it.
+    (progress) => ({
+      scene: 'limits',
+      gripperTip: HOME,
+      bowlPosition: GOAL_BOWL,
+      snapBowl: true,
+      limits: { smallBowlPosition: GOAL_BOWL.clone().setY(SMALL_BOWL_NESTED_HEIGHT), goal: 1 },
+      tubes: [[wrongDemoTube, 1, 0.25], [wrongRobotTube, 1, 0.5]],
+      camera: [limitsShot[0].clone().lerp(limitsCloseShot[0], ease(progress)), limitsShot[1].clone().lerp(limitsCloseShot[1], ease(progress))],
+    }),
   ];
 
 
@@ -365,6 +386,19 @@ function start(stageElement, mode) {
       card.style.opacity = String(shown);
       card.style.transform = `translateY(${slide.toFixed(1)}px)`;
       card.style.visibility = shown > 0 ? 'visible' : 'hidden';
+    });
+  }
+
+  // Keep every step's text on one line: if a line is wider than the screen allows, shrink its type to fit.
+  function fitStepText() {
+    const availableWidth = Math.min(1080, window.innerWidth - 40);
+    stepCards.forEach((card) => {
+      const phrase = card && card.querySelector('.phrase');
+      if (!phrase) return;
+      phrase.style.fontSize = '';
+      const baseSize = parseFloat(getComputedStyle(phrase).fontSize);
+      const lineWidth = phrase.scrollWidth;
+      if (lineWidth > availableWidth) phrase.style.fontSize = `${Math.floor(baseSize * availableWidth / lineWidth)}px`;
     });
   }
 
@@ -497,6 +531,11 @@ function start(stageElement, mode) {
 
   resize();
   window.addEventListener('resize', resize);
+  if (mode === 'scroll') {
+    fitStepText();
+    window.addEventListener('resize', fitStepText);
+    if (document.fonts) document.fonts.ready.then(fitStepText);
+  }
   if (mode === 'loop') {
     if ('IntersectionObserver' in window) {
       new IntersectionObserver((entries) => { previewVisible = entries[0].isIntersecting; }).observe(stageElement);
