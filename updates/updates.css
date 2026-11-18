@@ -107,6 +107,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickn
 
 /* Below the story */
 .section { max-width: 1120px; margin: 0 auto; padding: 72px max(20px, env(safe-area-inset-left)) 0; }
+/* The citations end the page now that there is no footer, so give them room below, clear of a phone's home bar. */
+article > .section:last-child { padding-bottom: calc(clamp(72px, 12vh, 120px) + env(safe-area-inset-bottom, 0px)); }
 .section h2 { font: 700 clamp(26px, 3.4vw, 36px)/1.1 var(--display); letter-spacing: -.025em; margin: 0 0 10px; }
 .section > p { max-width: 60ch; margin: 0 0 24px; }
 .section { padding-top: 112px; }
